@@ -1912,6 +1912,11 @@ p, li { white-space: pre-wrap; }
     </item>
     <item>
      <widget class="QLabel" name="ics_label">
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>Initial conditions</string>
       </property>

@@ -15,7 +15,7 @@ from cc3d.twedit5.Plugins.CC3DMLGenerator.CC3DMLGeneratorBase import CC3DMLGener
 from .CC3DPythonGenerator import CC3DPythonGenerator
 
 MAC = "qt_mac_set_native_menubar" in dir()
-
+DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Diffusion coefficients and boundary conditions (PDE Solvers Specification)"
 
 class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard):
     def __init__(self, parent=None):
@@ -772,7 +772,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.removePage(self.get_page_id_by_name("Chemotaxis Plugin"))
         self.removePage(self.get_page_id_by_name("AdhesionFlex Plugin"))
         self.removePage(self.get_page_id_by_name("ContactMultiCad Plugin"))
-        self.removePage(self.get_page_id_by_name("Diffusion coefficients and boundary conditions (PDE Solvers Specification)"))
+        self.removePage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
 
         self.nameLE.selectAll()
 
@@ -954,10 +954,58 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 zMin.setDisabled(False)
                 zMax = self.bcs_tab.findChild(QLineEdit, "z_max")
                 zMax.setDisabled(False)
-        print(cur_text)
+        #print(cur_text)
 
+    def use_ics_file(self, index):
+        print("hhhh")
+        tab_idx = self.ics_tab.currentIndex()
+        icr = "ic_radio_btn" + str(tab_idx)
+        current_rb = self.ics_tab.findChild(QRadioButton, icr)
+        icf = "ic_file_edt" + str(tab_idx)
+        current_fi = self.ics_tab.findChild(QLineEdit, icf)
+        icle = "ic_val" + str(tab_idx)
+        current_le = self.ics_tab.findChild(QLineEdit, icle)
+        if current_rb.isChecked():
+            current_fi.setDisabled(False)
+            current_le.setDisabled(True)
+        else:
+            current_fi.setDisabled(True)
+            current_le.setDisabled(False)
+
+
+
+    def getIC_Dialog(self, idx):
+        ic_group = QGroupBox("")
+        ic_layout = QBoxLayout(QBoxLayout.LeftToRight)
+        # Initial Val:
+        ic_val_group = QGroupBox("Initial value")
+        ic_val_layout = QBoxLayout(QBoxLayout.TopToBottom, ic_val_group)
+        ic_val_label = QLabel("Diffusant initial concentration or expression:")
+        ic_val_edit = QLineEdit("")
+        icv = "ic_val" + str(idx)
+        ic_val_edit.setObjectName(icv)
+        ic_val_layout.addWidget(ic_val_label)
+        ic_val_layout.addWidget(ic_val_edit)
+        ic_val_group.setLayout(ic_val_layout)
+        ic_layout.addWidget(ic_val_group)
+        # inital conc file:
+        ic_file_group = QGroupBox("Initial values file")
+        ic_file_layout = QBoxLayout(QBoxLayout.TopToBottom)
+        icfr = "ic_radio_btn" + str(idx)
+        ic_file_radio_btn = QRadioButton("Use ICs file")
+        ic_file_radio_btn.setObjectName(icfr)
+        ic_file_radio_btn.toggled.connect(self.use_ics_file)
+        ic_file_edit = QLineEdit("Enter file path here")
+        ic_file_edit.setObjectName("ic_file_edt" + str(idx))
+        ic_file_edit.setDisabled(True)
+        ic_file_layout.addWidget(ic_file_radio_btn)
+        ic_file_layout.addWidget(ic_file_edit)
+        ic_file_group.setLayout(ic_file_layout)
+
+        ic_layout.addWidget(ic_file_group)
+        ic_group.setLayout(ic_layout)
+        return ic_group
     def getBC_Dialog(self, idx):
-       # new_bc_tab = QTabWidget()
         bc_group = QGroupBox("")
         bc_layout = QBoxLayout(QBoxLayout.LeftToRight)
         # X axis:
@@ -1029,7 +1077,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         y_group.setLayout(y_layout)
 
         # Z axis:
-        z_val = self.zDimSB.value()  # Check if lattice has z dir
         z_group = QGroupBox("Along Z axis")
         z_layout = QBoxLayout(QBoxLayout.TopToBottom)
         z_new_combo_bz = QComboBox()
@@ -1047,6 +1094,16 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         zmax_label = QLabel("Value at z = z.max")
         zmax_line_edit = QLineEdit("0.0")
         xmax_le = "x_max" + str(idx)
+        z_val = self.zDimSB.value()  # Check if lattice has z dir
+        if z_val > 1:
+            z_new_combo_bz.setDisabled(False)
+            zmin_line_edit.setDisabled(False)
+            zmax_line_edit.setDisabled(False)
+        else:
+            z_new_combo_bz.setDisabled(True)
+            zmin_line_edit.setDisabled(True)
+            zmax_line_edit.setDisabled(True)
+
         zmax_line_edit.setObjectName(xmax_le)
         zmin_group = QGroupBox("")
         zmin_layout = QBoxLayout(QBoxLayout.LeftToRight)
@@ -1070,8 +1127,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
     def populate_pde_solver_entries(self):
         self.field_tab.clear() # clear the stuff
         self.cellTypeData = {}
-        # Set BCs table:
+
         self.bcs_tab.clear()
+        self.ics_tab.clear()
         print(self.cellTypeTable.rowCount(), "hi")
 
         for row in range(self.cellTypeTable.rowCount()):
@@ -1087,8 +1145,10 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
         for solver_name, fields in self.diffusantDict.items():
             for idx, field in enumerate(fields):
-                new_bc_dialog = self.getBC_Dialog(idx)
+                new_bc_dialog = self.getBC_Dialog(idx)  # Set BCs
                 self.bcs_tab.insertTab(idx, new_bc_dialog, field)
+                new_ic_dialog = self.getIC_Dialog(idx)  # Set ICs:
+                self.ics_tab.insertTab(idx, new_ic_dialog, field)
                 table_widget = QTableWidget()# have a global dictionary storing.self.field_table_dictionary = QTableWidget()
                 # self.field_table_widget_dict[field] = table_widget#
                 table_widget.setColumnCount(2)
@@ -1297,11 +1357,11 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             else:
                 self.removePage(self.get_page_id_by_name("AdhesionFlex Plugin"))
 
-            if len(self.diffusantDict.items()) > 0:
-                self.setPage(self.get_page_id_by_name("Diffusion coefficients and boundary conditions (PDE Solvers Specification)"), self.get_page_by_name("Diffusion coefficients and boundary conditions (PDE Solvers Specification)"))
+            if len(self.diffusantDict.items()) > 0:  # VALIDATE ICs and BCs
+                self.setPage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME), self.get_page_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
                 self.populate_pde_solver_entries()
             else:
-                self.removePage(self.get_page_id_by_name("Diffusion coefficients and boundary conditions (PDE Solvers Specification)"))
+                self.removePage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
             return True
 
         if self.currentId() == self.get_page_by_name("ContactMultiCad Plugin"):
@@ -1316,7 +1376,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             else:
                 return True
 
-        if self.currentId() == self.get_page_id_by_name("Diffusion coefficients and boundary conditions (PDE Solvers Specification)"):
+        if self.currentId() == self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME):
             # we only extract types from table here - it is not a validation strictly speaking
             # extract cell type information form the table
 
