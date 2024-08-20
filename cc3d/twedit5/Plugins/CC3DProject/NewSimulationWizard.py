@@ -1149,33 +1149,35 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 self.bcs_tab.insertTab(idx, new_bc_dialog, field)
                 new_ic_dialog = self.getIC_Dialog(idx)  # Set ICs:
                 self.ics_tab.insertTab(idx, new_ic_dialog, field)
-                table_widget = QTableWidget()# have a global dictionary storing.self.field_table_dictionary = QTableWidget()
-                # self.field_table_widget_dict[field] = table_widget#
-                table_widget.setColumnCount(2)
-                table_widget.setHorizontalHeaderLabels(["Diffusion coefficient", "Decay coefficient"])
-                width = table_widget.width()
-                # print("size", width)
-                table_widget.setColumnWidth(0, int(width / 2))
-                table_widget.setColumnWidth(1, int(width / 2))
+                table_widget = QTableWidget()
+                vh = QHeaderView(Qt.Vertical)
+                vh.hide()
+                table_widget.setVerticalHeader(vh)  # Hide row numbers
+                table_widget.setColumnCount(3)
+                table_widget.setHorizontalHeaderLabels(["Area or Volume", "Diffusion coefficient", "Decay coefficient"])
                 table_widget.horizontalHeader().setStretchLastSection(True)
+                table_widget.horizontalHeader().setSectionResizeMode(
+                    QHeaderView.Stretch)
 
                 for row, (type_name, type_data) in enumerate(self.cellTypeData.items()):
                     table_widget.insertRow(table_widget.rowCount())
                     default_value_diffusion_coefficient = '0.1'
                     default_value_decay_coefficient = '0.001'
                     if type_name == [type_name for type_name, type_data in self.cellTypeData.items()][0]:
-                        type_name = 'Global'
+                        type_name = 'Global (default value)'
                         default_value_decay_coefficient = '0.00001'
+                #    item = QTableWidgetItem(type_name)
+                #    item.setTextAlignment(Qt.AlignCenter)
+                #    table_widget.setVerticalHeaderItem(row, item)
                     item = QTableWidgetItem(type_name)
                     item.setTextAlignment(Qt.AlignCenter)
-                    table_widget.setVerticalHeaderItem(row, item)
+                    table_widget.setItem(row, 0, item)
                     diff_item = QTableWidgetItem(default_value_diffusion_coefficient)
                     diff_item.setTextAlignment(Qt.AlignCenter)
-                    table_widget.setItem(row, 0, diff_item)
+                    table_widget.setItem(row, 1, diff_item)
                     decay_item = QTableWidgetItem(default_value_decay_coefficient)
                     decay_item.setTextAlignment(Qt.AlignCenter)
-            #        table_widget.setItem(row, 1, QTableWidgetItem(default_value_decay_coefficient))
-                    table_widget.setItem(row, 1, decay_item)
+                    table_widget.setItem(row, 2, decay_item)
                 self.field_tab.insertTab(idx, table_widget, field)
                 self.field_table_dict[field] = table_widget
 

@@ -14,7 +14,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_NewSimulationWizard(object):
     def setupUi(self, NewSimulationWizard):
         NewSimulationWizard.setObjectName("NewSimulationWizard")
-        NewSimulationWizard.resize(741, 695)
+        NewSimulationWizard.resize(741, 814)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(NewSimulationWizard.sizePolicy().hasHeightForWidth())
+        NewSimulationWizard.setSizePolicy(sizePolicy)
         self.wizardPage1 = QtWidgets.QWizardPage()
         self.wizardPage1.setObjectName("wizardPage1")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.wizardPage1)
@@ -753,9 +758,6 @@ class Ui_NewSimulationWizard(object):
         self.ics_tab.setObjectName("ics_tab")
         self.tab = QtWidgets.QWidget()
         self.tab.setObjectName("tab")
-        self.radioButton = QtWidgets.QRadioButton(self.tab)
-        self.radioButton.setGeometry(QtCore.QRect(340, 40, 95, 20))
-        self.radioButton.setObjectName("radioButton")
         self.ics_tab.addTab(self.tab, "")
         self.tab_3 = QtWidgets.QWidget()
         self.tab_3.setObjectName("tab_3")
@@ -795,6 +797,7 @@ class Ui_NewSimulationWizard(object):
         NewSimulationWizard.addPage(self.wizardPage_3)
 
         self.retranslateUi(NewSimulationWizard)
+        self.field_tab.setCurrentIndex(-1)
         self.bcs_tab.setCurrentIndex(0)
         self.piffRB.toggled['bool'].connect(self.piffPB.setVisible) # type: ignore
         self.piffRB.toggled['bool'].connect(self.piffLE.setVisible) # type: ignore
@@ -1191,7 +1194,6 @@ class Ui_NewSimulationWizard(object):
         self.cmcMoleculeAddPB.setText(_translate("NewSimulationWizard", "Add"))
         self.wizardPageDiffusion.setTitle(_translate("NewSimulationWizard", "Diffusion coefficients and boundary conditions (PDE Solvers Specification)"))
         self.ics_label.setText(_translate("NewSimulationWizard", "Initial conditions"))
-        self.radioButton.setText(_translate("NewSimulationWizard", "RadioButton"))
         self.ics_tab.setTabText(self.ics_tab.indexOf(self.tab), _translate("NewSimulationWizard", "Tab 1"))
         self.ics_tab.setTabText(self.ics_tab.indexOf(self.tab_3), _translate("NewSimulationWizard", "Tab 2"))
         self.bcs_label.setText(_translate("NewSimulationWizard", "Boundary conditions"))
