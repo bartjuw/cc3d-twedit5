@@ -16,6 +16,7 @@ from .CC3DPythonGenerator import CC3DPythonGenerator
 
 MAC = "qt_mac_set_native_menubar" in dir()
 DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Diffusion coefficients and boundary conditions (PDE Solvers Specification)"
+SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME = "Secretion in DiffusionFE plugin"
 
 class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard):
     def __init__(self, parent=None):
@@ -33,6 +34,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.simulationFilesDir = ""
         self.projectPath = ""
         self.setupUi(self)
+        self.diff_secretion = None  # Holds DiffusionFE secretion info
 
         # This dictionary holds references to certain pages e.g. plugin configuration pages are inserted on demand
         # and access to those pages is facilitated via self.pageDict
@@ -517,6 +519,93 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         for idx in range(rows - 1, -1, -1):
             self.secretionTable.removeRow(idx)
 
+    # DiffusionFE Secretion
+    @pyqtSlot(bool)  # signature of the signal emited by the button
+    def on_secrConstConcRB_2_toggled(self, _flag):
+        if _flag:
+            self.secrRateLB_2.setText("Const. Concentration")
+        else:
+            self.secrRateLB_2.setText("Secretion Rate")
+
+    @pyqtSlot(bool)  # signature of the signal emited by the button
+    def on_secrOnContactRB_2_toggled(self, _flag):
+        if _flag:
+            self.secrAddOnContactPB_2.setHidden(False)
+            self.secrOnContactCellTypeCB_2.setHidden(False)
+            self.secrOnContactLE_2.setHidden(False)
+
+        else:
+            self.secrAddOnContactPB_2.setHidden(True)
+            self.secrOnContactCellTypeCB_2.setHidden(True)
+            self.secrOnContactLE_2.setHidden(True)
+
+    @pyqtSlot()  # signature of the signal emited by the button
+    def on_secrAddOnContactPB_2_clicked(self):
+
+        cell_type = str(self.secrOnContactCellTypeCB_2.currentText())
+        current_text = str(self.secrOnContactLE_2.text())
+        current_types = current_text.split(',')
+
+        if current_text != "":
+            if cell_type not in current_types:
+                self.secrOnContactLE_2.setText(current_text + "," + cell_type)
+        else:
+            self.secrOnContactLE_2.setText(cell_type)
+
+    @pyqtSlot()  # signature of the signal emited by the button
+    def on_secrAddRowPB_2_clicked(self):
+        field = str(self.secrFieldCB_2.currentText()).strip()
+        cell_type = str(self.secrCellTypeCB_2.currentText()).strip()
+
+        try:
+            secr_rate = float(str(self.secrRateLE_2.text()))
+        except Exception:
+            secr_rate = 0.0
+
+        secr_on_contact = str(self.secrOnContactLE_2.text())
+
+        secr_type = "uniform"
+        if self.secrOnContactRB_2.isChecked():
+            secr_type = "on contact"
+
+        elif self.secrConstConcRB_2.isChecked():
+            secr_type = "constant concentration"
+
+        rows = self.secretion_DiffusionFE_Table.rowCount()
+        self.secretion_DiffusionFE_Table.insertRow(rows)
+        self.secretion_DiffusionFE_Table.setItem(rows, 0, QTableWidgetItem(field))
+        self.secretion_DiffusionFE_Table.setItem(rows, 1, QTableWidgetItem(cell_type))
+        self.secretion_DiffusionFE_Table.setItem(rows, 2, QTableWidgetItem(str(secr_rate)))
+        self.secretion_DiffusionFE_Table.setItem(rows, 3, QTableWidgetItem(secr_on_contact))
+        self.secretion_DiffusionFE_Table.setItem(rows, 4, QTableWidgetItem(str(secr_type)))
+
+        # reset entry lines
+        self.secrOnContactLE_2.setText('')
+
+    @pyqtSlot()  # signature of the signal emited by the button
+    def on_secrRemoveRowsPB_2_clicked(self):
+        selected_items = self.secretion_DiffusionFE_Table.selectedItems()
+        row_dict = {}
+        for item in selected_items:
+            row_dict[item.row()] = 0
+
+        rows = list(row_dict.keys())
+        rows.sort()
+        rows_size = len(rows)
+        for idx in range(rows_size - 1, -1, -1):
+            row = rows[idx]
+            self.secretion_DiffusionFE_Table.removeRow(row)
+
+    @pyqtSlot()  # signature of the signal emited by the button
+    def on_secrClearTablePB_2_clicked(self):
+        rows = self.secretion_DiffusionFE_Table.rowCount()
+
+        for idx in range(rows - 1, -1, -1):
+            self.secretion_DiffusionFE_Table.removeRow(idx)
+
+
+
+
     # CHEMOTAXIS
     @pyqtSlot(bool)  # signature of the signal emited by the button
     def on_chemSatRB_toggled(self, _flag):
@@ -773,6 +862,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.removePage(self.get_page_id_by_name("AdhesionFlex Plugin"))
         self.removePage(self.get_page_id_by_name("ContactMultiCad Plugin"))
         self.removePage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
+        self.removePage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
 
         self.nameLE.selectAll()
 
@@ -833,6 +923,18 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.secrAddOnContactPB.setHidden(True)
         self.secrOnContactCellTypeCB.setHidden(True)
         self.secrOnContactLE.setHidden(True)
+
+        # DiffusionFE Secretion table:
+        base_size = self.secretion_DiffusionFE_Table.baseSize()
+        self.secretion_DiffusionFE_Table.setColumnWidth(0, int(base_size.width() / 5))
+        self.secretion_DiffusionFE_Table.setColumnWidth(1, int(base_size.width() / 5))
+        self.secretion_DiffusionFE_Table.setColumnWidth(2, int(base_size.width() / 5))
+        self.secretion_DiffusionFE_Table.setColumnWidth(3, int(base_size.width() / 5))
+        self.secretion_DiffusionFE_Table.setColumnWidth(4, int(base_size.width() / 5))
+        self.secretion_DiffusionFE_Table.horizontalHeader().setStretchLastSection(True)
+        self.secrAddOnContactPB_2.setHidden(True)
+        self.secrOnContactCellTypeCB_2.setHidden(True)
+        self.secrOnContactLE_2.setHidden(True)
 
         # AF molecule table
         self.afTable.horizontalHeader().setStretchLastSection(True)
@@ -1182,6 +1284,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 self.field_table_dict[field] = table_widget
 
 
+
     def validateCurrentPage(self):
 
         print("THIS IS VALIDATE FOR PAGE ", self.currentId)
@@ -1330,6 +1433,18 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 for field_name in fields:
                     self.secrFieldCB.addItem(field_name)
 
+            # DiffusionFE secretion plugin
+            self.secrFieldCB_2.clear()
+            self.secrCellTypeCB_2.clear()
+            self.secrOnContactCellTypeCB_2.clear()
+
+            for cell_type_tuple in self.typeTable:
+                self.secrCellTypeCB_2.addItem(cell_type_tuple[0])
+                self.secrOnContactCellTypeCB_2.addItem(cell_type_tuple[0])
+            for solver_name, fields in self.diffusantDict.items():
+                for field_name in fields:
+                    self.secrFieldCB_2.addItem(field_name)
+
             return True
 
         if self.currentId() == self.get_page_id_by_name("Cell Properties and Behaviors"):
@@ -1361,9 +1476,11 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
             if len(self.diffusantDict.items()) > 0:  # VALIDATE ICs and BCs
                 self.setPage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME), self.get_page_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
+                self.setPage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME), self.get_page_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
                 self.populate_pde_solver_entries()
             else:
                 self.removePage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
+                self.removePage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
             return True
 
         if self.currentId() == self.get_page_by_name("ContactMultiCad Plugin"):
@@ -1393,7 +1510,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                     lst2.append(decay)
                 self.tabs_arguments.append([lst1, lst2])
 
-
+        #if self.currentId() == self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME):
 
         if self.currentId() == self.get_page_by_name("AdhesionFlex Plugin"):
 
@@ -1515,7 +1632,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
             cmc_table.append(cadherin)
 
-        self.pde_field_data = {}
+        self.pde_field_data = {}  # Need to add all the new settings/values to this
 
         for row in range(self.fieldTable.rowCount()):
             chem_field_name = str(self.fieldTable.item(row, 0).text())
@@ -1551,6 +1668,32 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 self.secretion_data[secr_field_name].append(secr_dict)
             except LookupError:
                 self.secretion_data[secr_field_name] = [secr_dict]
+
+        #  diffusionFE_secretion
+        self.secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
+        for row in range(self.secretion_DiffusionFE_Table.rowCount()):
+
+            secr_field_name = str(self.secretion_DiffusionFE_Table.item(row, 0).text())
+            cell_type = str(self.secretion_DiffusionFE_Table.item(row, 1).text())
+
+            try:
+                rate = float(str(self.secretion_DiffusionFE_Table.item(row, 2).text()))
+            except Exception:
+                rate = 0.0
+
+            on_contact_with = str(self.secretion_DiffusionFE_Table.item(row, 3).text())
+            secretion_type = str(self.secretion_DiffusionFE_Table.item(row, 4).text())
+
+            diff_fe_secr_dict = {}
+            diff_fe_secr_dict["CellType"] = cell_type
+            diff_fe_secr_dict["Rate"] = rate
+            diff_fe_secr_dict["OnContactWith"] = on_contact_with
+            diff_fe_secr_dict["SecretionType"] = secretion_type
+
+            try:
+                self.secretion_diffusionFE_data[secr_field_name].append(diff_fe_secr_dict)
+            except LookupError:
+                self.secretion_diffusionFE_data[secr_field_name] = [diff_fe_secr_dict]
 
         self.chemotaxisData = {}  # format {field:[chemDict1,chemDict2,...]}
 
@@ -1670,7 +1813,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         kwds['pdeFieldData'] = self.pde_field_data
         kwds['secretionData'] = self.secretion_data
         kwds['diffusantData'] = self.tabs_arguments
-
+# self.secretion_diffusionFE_data
         generator.generateMetadataSimulationProperties(*args, **kwds)
 
         generator.generatePottsSection(*args, **kwds)
