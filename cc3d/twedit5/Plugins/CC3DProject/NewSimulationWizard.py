@@ -1112,6 +1112,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         bc_layout = QBoxLayout(QBoxLayout.LeftToRight)
         # X axis:
         x_group = QGroupBox("Along X axis", bc_group)
+        x_group.setObjectName("x_group_" + str(idx))
         x_layout = QBoxLayout(QBoxLayout.TopToBottom, x_group)
         x_new_combo_bx = QComboBox(x_group)
         xc = "x_combo" + str(idx)
@@ -1146,6 +1147,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
         # Y axis:
         y_group = QGroupBox("Along Y axis")
+        y_group.setObjectName("y_group_" + str(idx))
         y_layout = QBoxLayout(QBoxLayout.TopToBottom)
         y_new_combo_by = QComboBox()
         yc = "y_combo" + str(idx)
@@ -1180,6 +1182,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
         # Z axis:
         z_group = QGroupBox("Along Z axis")
+        z_group.setObjectName("z_group_" + str(idx))
         z_layout = QBoxLayout(QBoxLayout.TopToBottom)
         z_new_combo_bz = QComboBox()
         zc = "z_combo" + str(idx)
@@ -1195,7 +1198,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         zmin_line_edit.setObjectName(zmin_le)
         zmax_label = QLabel("Value at z = z.max")
         zmax_line_edit = QLineEdit("0.0")
-        xmax_le = "x_max" + str(idx)
+        xmax_le = "z_max" + str(idx)
         z_val = self.zDimSB.value()  # Check if lattice has z dir
         if z_val > 1:
             z_new_combo_bz.setDisabled(False)
@@ -1282,6 +1285,73 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                     table_widget.setItem(row, 2, decay_item)
                 self.field_tab.insertTab(idx, table_widget, field)
                 self.field_table_dict[field] = table_widget
+
+    def getCurrentDiffusionFE_Values(self):
+        diffusion_vals_dict = {}
+        for solver_name, fields in self.diffusantDict.items():
+            for idx, field in enumerate(fields):
+                diff_table = self.field_table_dict[field]
+                vals_by_vol = {}
+                for row in range(diff_table.rowCount()):
+                    vol = diff_table.item(row, 0).text()
+                    coef = diff_table.item(row, 1).text()
+                    decay = diff_table.item(row, 2).text()
+                    if row == 0:
+                        vals_by_vol[vol] = {"coeffs": {"GlobalDiffusionCoefficient": coef, "GlobalDecayCoefficient": decay}}
+                    else:
+                        vals_by_vol[vol] = {"coeffs": {"DiffusionCoefficient": coef, "DecayCoefficient": decay}}
+                for widget in self.bcs_tab.children():
+                   # print("tab name: ", self.bcs_tab.objectName())
+                   # print("tabtext: ", self.bcs_tab.tabText(0))
+                    group_boxes = widget.findChildren(QGroupBox)
+                    for child in group_boxes:
+                        group_bx_name = ""
+                        if isinstance(child, QGroupBox):
+                           # print("group box: ", child.objectName())
+                           # print("group box title: ", child.title())
+                            combo_boxes = child.findChildren(QComboBox)
+                            group_bx_name = child.objectName()
+                            if group_bx_name.endswith("_" + str(idx)):
+                                #print("Number of Comboboxes: ", len(combo_boxes))
+                                for c_box in combo_boxes:
+                                   # isPeriodic = False
+                                    bcs = {}
+                                    boundary_type = ''
+                                    axis_dir = ""
+                                    if "x" in c_box.objectName():
+                                        axis_dir = "x_"
+                                    else:
+                                        if "y" in c_box.objectName():
+                                            axis_dir = "y_"
+                                        else:
+                                            axis_dir = "z_"
+                                    if c_box.currentIndex() == 0:  # periodic boundary
+                                       # print(c_box.objectName())
+                                        boundary_type = "Periodic"
+                                      #  isPeriodic = True
+                                    else:
+                                        if c_box.currentIndex() == 1:  # constant value boundary
+                                            boundary_type = "ConstantValue"
+                                           # print(c_box.currentText())
+                                        else:                          # Constant derivative boundary
+                                            boundary_type = "ConstantDerivative"
+                                            #print(c_box.currentText())
+                                    lines = child.findChildren(QLineEdit)
+                                    print("number of lines: ", len(lines))
+                                    axis_vals = {}
+                                    for new_line in lines:
+                                        if axis_dir in new_line.objectName():
+                                            axis_vals.update({new_line.objectName(): new_line.text()})
+                                          #  print(new_line.objectName())
+                                          #  print("----------------")
+                                    bcs[boundary_type] = axis_vals
+                                    axial_bc = {group_bx_name: bcs}
+                                    vals_by_vol.update(axial_bc)
+                diffusion_vals_dict[field] = vals_by_vol
+
+        return diffusion_vals_dict
+
+
 
 
 
@@ -1633,14 +1703,15 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             cmc_table.append(cadherin)
 
         self.pde_field_data = {}  # Need to add all the new settings/values to this
-
+#  Work through table then get ICs and BCs, finally secretion table
         for row in range(self.fieldTable.rowCount()):
             chem_field_name = str(self.fieldTable.item(row, 0).text())
 
             solver_name = str(self.fieldTable.item(row, 1).text())
 
             self.pde_field_data[chem_field_name] = solver_name
-
+    # if solver_name = "DiffusionSolverFe" needed
+        diffusionFE_vals_dict = self.getCurrentDiffusionFE_Values()
         self.secretion_data = {}  # format {field:[secrDict1,secrDict2,...]}
 
         for row in range(self.secretionTable.rowCount()):
