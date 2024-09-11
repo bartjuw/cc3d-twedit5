@@ -1082,7 +1082,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         ic_val_group = QGroupBox("Initial value")
         ic_val_layout = QBoxLayout(QBoxLayout.TopToBottom, ic_val_group)
         ic_val_label = QLabel("Diffusant initial concentration or expression:")
-        ic_val_edit = QLineEdit("")
+        ic_val_edit = QLineEdit("0.0")
         icv = "ic_val_" + str(idx)
         ic_val_edit.setObjectName(icv)
         ic_val_layout.addWidget(ic_val_label)
