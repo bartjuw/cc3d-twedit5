@@ -47,7 +47,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.diffusantDict = {}
         self.chemotaxisData = {}
         self.cellTypeData = {}
-        self.tabs_arguments = []
+        #self.tabs_arguments = {}
+        self.diffusionFE_vals_dict = {}
+        #self.secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
         self.field_table_dict = {}
         #
 
@@ -1270,9 +1272,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                     if type_name == [type_name for type_name, type_data in self.cellTypeData.items()][0]:
                         type_name = 'Global (default value)'
                         default_value_decay_coefficient = '0.00001'
-                #    item = QTableWidgetItem(type_name)
-                #    item.setTextAlignment(Qt.AlignCenter)
-                #    table_widget.setVerticalHeaderItem(row, item)
                     item = QTableWidgetItem(type_name)
                     item.setTextAlignment(Qt.AlignCenter)
                     table_widget.setItem(row, 0, item)
@@ -1299,7 +1298,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                         diffusant_data[vol] = {"coeffs": {"GlobalDiffusionCoefficient": coef, "GlobalDecayCoefficient": decay}}
                     else:
                         diffusant_data[vol] = {"coeffs": {"DiffusionCoefficient": coef, "DecayCoefficient": decay}}
-                for widget in self.bcs_tab.children():
+                for widget in self.bcs_tab.children():  # Get BCs
                     group_boxes = widget.findChildren(QGroupBox)
                     all_bcs = {}
                     for child in group_boxes:
@@ -1338,7 +1337,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                         diffusant_bcs = {"BoundaryConditions": all_bcs}
                     diffusant_data.update(diffusant_bcs)
 
-                for widget in self.ics_tab.children():
+                for widget in self.ics_tab.children():  # Get ICs
                     group_boxes = widget.findChildren(QGroupBox)
                     all_ics = {}
                     for group in group_boxes:
@@ -1354,12 +1353,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                             for line in lines:
                                 if ic_file:
                                     if "ic_file" in line.objectName():
-                                        print("ic File: ", line.text())
                                         diffusant_ic = {"ConcentrationFileName": line.text()}
                                 else:
                                     if "ic_val" in line.objectName():
-                                        print("Line name: ", line.objectName())
-                                        print("ic val: ", line.text())
                                         diffusant_ic = {"InitialConcentrationExpression": line.text()}
                                 all_ics.update(diffusant_ic)
                         diffusant_ic = {"InitialConditions": all_ics}
@@ -1580,21 +1576,8 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 return True
 
         if self.currentId() == self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME):
-            # we only extract types from table here - it is not a validation strictly speaking
-            # extract cell type information form the table
-
-            self.tabs_arguments = []
-            for field, table_widget in self.field_table_dict.items():
-                lst1 = []
-                lst2 = []
-                for row in range(table_widget.rowCount()):
-                    coef = table_widget.item(row, 0).text()
-                    decay = table_widget.item(row, 1).text()
-                    lst1.append(coef)
-                    lst2.append(decay)
-                self.tabs_arguments.append([lst1, lst2])
-
-        #if self.currentId() == self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME):
+            # we only extract data from page here - it is not a validation strictly speaking
+            self.diffusionFE_vals_dict = self.getCurrentDiffusionFE_Values()
 
         if self.currentId() == self.get_page_by_name("AdhesionFlex Plugin"):
 
@@ -1724,8 +1707,37 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             solver_name = str(self.fieldTable.item(row, 1).text())
 
             self.pde_field_data[chem_field_name] = solver_name
-    # TODO: if solver_name = "DiffusionSolverFe" needed
-        diffusionFE_vals_dict = self.getCurrentDiffusionFE_Values()
+
+        if solver_name == "DiffusionSolverFE":
+          #  self.diffusionFE_vals_dict = self.getCurrentDiffusionFE_Values()
+            #  DiffusionFE Secretion:
+            secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
+            for row in range(self.secretion_DiffusionFE_Table.rowCount()):
+
+                secr_field_name = str(self.secretion_DiffusionFE_Table.item(row, 0).text())
+                cell_type = str(self.secretion_DiffusionFE_Table.item(row, 1).text())
+
+                try:
+                    rate = float(str(self.secretion_DiffusionFE_Table.item(row, 2).text()))
+                except Exception:
+                    rate = 0.0
+
+                on_contact_with = str(self.secretion_DiffusionFE_Table.item(row, 3).text())
+                secretion_type = str(self.secretion_DiffusionFE_Table.item(row, 4).text())
+
+                diff_fe_secr_dict = {}
+                diff_fe_secr_dict["CellType"] = cell_type
+                diff_fe_secr_dict["Rate"] = rate
+                diff_fe_secr_dict["OnContactWith"] = on_contact_with
+                diff_fe_secr_dict["SecretionType"] = secretion_type
+
+                try:
+                    secretion_diffusionFE_data[secr_field_name].append(diff_fe_secr_dict)
+                except LookupError:
+                    secretion_diffusionFE_data[secr_field_name] = [diff_fe_secr_dict]
+        for field in secretion_diffusionFE_data:
+            self.diffusionFE_vals_dict[field]["Secretion"] = secretion_diffusionFE_data[field]
+
         self.secretion_data = {}  # format {field:[secrDict1,secrDict2,...]}
 
         for row in range(self.secretionTable.rowCount()):
@@ -1754,31 +1766,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             except LookupError:
                 self.secretion_data[secr_field_name] = [secr_dict]
 
-        #  diffusionFE_secretion
-        self.secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
-        for row in range(self.secretion_DiffusionFE_Table.rowCount()):
 
-            secr_field_name = str(self.secretion_DiffusionFE_Table.item(row, 0).text())
-            cell_type = str(self.secretion_DiffusionFE_Table.item(row, 1).text())
-
-            try:
-                rate = float(str(self.secretion_DiffusionFE_Table.item(row, 2).text()))
-            except Exception:
-                rate = 0.0
-
-            on_contact_with = str(self.secretion_DiffusionFE_Table.item(row, 3).text())
-            secretion_type = str(self.secretion_DiffusionFE_Table.item(row, 4).text())
-
-            diff_fe_secr_dict = {}
-            diff_fe_secr_dict["CellType"] = cell_type
-            diff_fe_secr_dict["Rate"] = rate
-            diff_fe_secr_dict["OnContactWith"] = on_contact_with
-            diff_fe_secr_dict["SecretionType"] = secretion_type
-
-            try:
-                self.secretion_diffusionFE_data[secr_field_name].append(diff_fe_secr_dict)
-            except LookupError:
-                self.secretion_diffusionFE_data[secr_field_name] = [diff_fe_secr_dict]
 
         self.chemotaxisData = {}  # format {field:[chemDict1,chemDict2,...]}
 
@@ -1883,7 +1871,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         pythonGenerator.generate_steppable_registration_lines()
 
     def generateXML(self, generator):
-
         cell_type_dict = self.cellTypeData
         args = []
 
@@ -1897,8 +1884,8 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         kwds['chemotaxisData'] = self.chemotaxisData
         kwds['pdeFieldData'] = self.pde_field_data
         kwds['secretionData'] = self.secretion_data
-        kwds['diffusantData'] = self.tabs_arguments
-# self.secretion_diffusionFE_data
+        kwds['diffusantData'] = self.diffusionFE_vals_dict
+
         generator.generateMetadataSimulationProperties(*args, **kwds)
 
         generator.generatePottsSection(*args, **kwds)
