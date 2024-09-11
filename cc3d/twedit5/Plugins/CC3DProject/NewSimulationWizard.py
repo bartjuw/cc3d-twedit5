@@ -1056,16 +1056,14 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 zMin.setDisabled(False)
                 zMax = self.bcs_tab.findChild(QLineEdit, "z_max")
                 zMax.setDisabled(False)
-        #print(cur_text)
 
     def use_ics_file(self, index):
-        print("hhhh")
         tab_idx = self.ics_tab.currentIndex()
-        icr = "ic_radio_btn" + str(tab_idx)
+        icr = "ic_radio_btn_" + str(tab_idx)
         current_rb = self.ics_tab.findChild(QRadioButton, icr)
-        icf = "ic_file_edt" + str(tab_idx)
+        icf = "ic_file_edt_" + str(tab_idx)
         current_fi = self.ics_tab.findChild(QLineEdit, icf)
-        icle = "ic_val" + str(tab_idx)
+        icle = "ic_val_" + str(tab_idx)
         current_le = self.ics_tab.findChild(QLineEdit, icle)
         if current_rb.isChecked():
             current_fi.setDisabled(False)
@@ -1078,13 +1076,14 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
     def getIC_Dialog(self, idx):
         ic_group = QGroupBox("")
+        ic_group.setObjectName("ic_group_" + str(idx))
         ic_layout = QBoxLayout(QBoxLayout.LeftToRight)
         # Initial Val:
         ic_val_group = QGroupBox("Initial value")
         ic_val_layout = QBoxLayout(QBoxLayout.TopToBottom, ic_val_group)
         ic_val_label = QLabel("Diffusant initial concentration or expression:")
         ic_val_edit = QLineEdit("")
-        icv = "ic_val" + str(idx)
+        icv = "ic_val_" + str(idx)
         ic_val_edit.setObjectName(icv)
         ic_val_layout.addWidget(ic_val_label)
         ic_val_layout.addWidget(ic_val_edit)
@@ -1093,12 +1092,12 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         # inital conc file:
         ic_file_group = QGroupBox("Initial values file")
         ic_file_layout = QBoxLayout(QBoxLayout.TopToBottom)
-        icfr = "ic_radio_btn" + str(idx)
+        icfr = "ic_radio_btn_" + str(idx)
         ic_file_radio_btn = QRadioButton("Use ICs file")
         ic_file_radio_btn.setObjectName(icfr)
         ic_file_radio_btn.toggled.connect(self.use_ics_file)
         ic_file_edit = QLineEdit("Enter file path here")
-        ic_file_edit.setObjectName("ic_file_edt" + str(idx))
+        ic_file_edit.setObjectName("ic_file_edt_" + str(idx))
         ic_file_edit.setDisabled(True)
         ic_file_layout.addWidget(ic_file_radio_btn)
         ic_file_layout.addWidget(ic_file_edit)
@@ -1259,7 +1258,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 vh.hide()
                 table_widget.setVerticalHeader(vh)  # Hide row numbers
                 table_widget.setColumnCount(3)
-                table_widget.setHorizontalHeaderLabels(["Area or Volume", "Diffusion coefficient", "Decay coefficient"])
+                table_widget.setHorizontalHeaderLabels(["Cell or Area/Volume", "Diffusion coefficient", "Decay coefficient"])
                 table_widget.horizontalHeader().setStretchLastSection(True)
                 table_widget.horizontalHeader().setSectionResizeMode(
                     QHeaderView.Stretch)
@@ -1291,30 +1290,25 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         for solver_name, fields in self.diffusantDict.items():
             for idx, field in enumerate(fields):
                 diff_table = self.field_table_dict[field]
-                vals_by_vol = {}
+                diffusant_data = {}
                 for row in range(diff_table.rowCount()):
                     vol = diff_table.item(row, 0).text()
                     coef = diff_table.item(row, 1).text()
                     decay = diff_table.item(row, 2).text()
                     if row == 0:
-                        vals_by_vol[vol] = {"coeffs": {"GlobalDiffusionCoefficient": coef, "GlobalDecayCoefficient": decay}}
+                        diffusant_data[vol] = {"coeffs": {"GlobalDiffusionCoefficient": coef, "GlobalDecayCoefficient": decay}}
                     else:
-                        vals_by_vol[vol] = {"coeffs": {"DiffusionCoefficient": coef, "DecayCoefficient": decay}}
+                        diffusant_data[vol] = {"coeffs": {"DiffusionCoefficient": coef, "DecayCoefficient": decay}}
                 for widget in self.bcs_tab.children():
-                   # print("tab name: ", self.bcs_tab.objectName())
-                   # print("tabtext: ", self.bcs_tab.tabText(0))
                     group_boxes = widget.findChildren(QGroupBox)
+                    all_bcs = {}
                     for child in group_boxes:
                         group_bx_name = ""
                         if isinstance(child, QGroupBox):
-                           # print("group box: ", child.objectName())
-                           # print("group box title: ", child.title())
                             combo_boxes = child.findChildren(QComboBox)
                             group_bx_name = child.objectName()
                             if group_bx_name.endswith("_" + str(idx)):
-                                #print("Number of Comboboxes: ", len(combo_boxes))
                                 for c_box in combo_boxes:
-                                   # isPeriodic = False
                                     bcs = {}
                                     boundary_type = ''
                                     axis_dir = ""
@@ -1326,33 +1320,53 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                                         else:
                                             axis_dir = "z_"
                                     if c_box.currentIndex() == 0:  # periodic boundary
-                                       # print(c_box.objectName())
                                         boundary_type = "Periodic"
-                                      #  isPeriodic = True
                                     else:
                                         if c_box.currentIndex() == 1:  # constant value boundary
                                             boundary_type = "ConstantValue"
-                                           # print(c_box.currentText())
                                         else:                          # Constant derivative boundary
                                             boundary_type = "ConstantDerivative"
-                                            #print(c_box.currentText())
                                     lines = child.findChildren(QLineEdit)
-                                    print("number of lines: ", len(lines))
                                     axis_vals = {}
                                     for new_line in lines:
                                         if axis_dir in new_line.objectName():
                                             axis_vals.update({new_line.objectName(): new_line.text()})
-                                          #  print(new_line.objectName())
-                                          #  print("----------------")
                                     bcs[boundary_type] = axis_vals
                                     axial_bc = {group_bx_name: bcs}
-                                    vals_by_vol.update(axial_bc)
-                diffusion_vals_dict[field] = vals_by_vol
+                                    all_bcs.update(axial_bc)
 
+                        diffusant_bcs = {"BoundaryConditions": all_bcs}
+                    diffusant_data.update(diffusant_bcs)
+
+                for widget in self.ics_tab.children():
+                    group_boxes = widget.findChildren(QGroupBox)
+                    all_ics = {}
+                    for group in group_boxes:
+                        ic_file = False
+                        diffusant_ic = {}
+                        group_bx_name = group.objectName()
+                        if group_bx_name.endswith("_" + str(idx)):
+                            radio_buttons = group.findChildren(QRadioButton)
+                            for rb in radio_buttons:
+                                if rb.isChecked():
+                                    ic_file = True
+                            lines = group.findChildren(QLineEdit)
+                            for line in lines:
+                                if ic_file:
+                                    if "ic_file" in line.objectName():
+                                        print("ic File: ", line.text())
+                                        diffusant_ic = {"ConcentrationFileName": line.text()}
+                                else:
+                                    if "ic_val" in line.objectName():
+                                        print("Line name: ", line.objectName())
+                                        print("ic val: ", line.text())
+                                        diffusant_ic = {"InitialConcentrationExpression": line.text()}
+                                all_ics.update(diffusant_ic)
+                        diffusant_ic = {"InitialConditions": all_ics}
+                    diffusant_data.update(diffusant_ic)
+                diffusion_vals_dict[field] = diffusant_data
+            print(diffusion_vals_dict)
         return diffusion_vals_dict
-
-
-
 
 
     def validateCurrentPage(self):
@@ -1703,14 +1717,14 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             cmc_table.append(cadherin)
 
         self.pde_field_data = {}  # Need to add all the new settings/values to this
-#  Work through table then get ICs and BCs, finally secretion table
+        #  Work through table then get ICs and BCs, finally secretion table
         for row in range(self.fieldTable.rowCount()):
             chem_field_name = str(self.fieldTable.item(row, 0).text())
 
             solver_name = str(self.fieldTable.item(row, 1).text())
 
             self.pde_field_data[chem_field_name] = solver_name
-    # if solver_name = "DiffusionSolverFe" needed
+    # TODO: if solver_name = "DiffusionSolverFe" needed
         diffusionFE_vals_dict = self.getCurrentDiffusionFE_Values()
         self.secretion_data = {}  # format {field:[secrDict1,secrDict2,...]}
 
