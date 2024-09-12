@@ -1290,14 +1290,16 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             for idx, field in enumerate(fields):
                 diff_table = self.field_table_dict[field]
                 diffusant_data = {}
+                vol_coeffs = {}
                 for row in range(diff_table.rowCount()):
                     vol = diff_table.item(row, 0).text()
                     coef = diff_table.item(row, 1).text()
                     decay = diff_table.item(row, 2).text()
                     if row == 0:
-                        diffusant_data[vol] = {"coeffs": {"GlobalDiffusionCoefficient": coef, "GlobalDecayCoefficient": decay}}
+                        vol_coeffs.update({vol: {"GlobalDiffusionCoefficient": coef, "GlobalDecayCoefficient": decay}})
                     else:
-                        diffusant_data[vol] = {"coeffs": {"DiffusionCoefficient": coef, "DecayCoefficient": decay}}
+                        vol_coeffs.update({vol: {"DiffusionCoefficient": coef, "DecayCoefficient": decay}})
+                diffusant_data["Coefficients"] = vol_coeffs
                 for widget in self.bcs_tab.children():  # Get BCs
                     group_boxes = widget.findChildren(QGroupBox)
                     all_bcs = {}
