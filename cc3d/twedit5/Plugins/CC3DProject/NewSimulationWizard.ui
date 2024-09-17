@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>887</width>
-    <height>788</height>
+    <height>797</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -568,7 +568,7 @@ p, li { white-space: pre-wrap; }
     </item>
    </layout>
   </widget>
-  <widget class="QWizardPage" name="wizardPage_7">
+  <widget class="QWizardPage" name="wizardPage_chemical_fields">
    <property name="title">
     <string>Chemical Fields (Diffusants)</string>
    </property>
@@ -602,26 +602,53 @@ p, li { white-space: pre-wrap; }
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="clearFieldTablePB">
-        <property name="text">
-         <string>Clear Table</string>
+       <widget class="QTextBrowser" name="diff_solver_info_textBrowser">
+        <property name="placeholderText">
+         <string>Description of each diffusion algorithm.</string>
+        </property>
+        <property name="source">
+         <url>
+          <string>file:///D:/BJ_FILES/Work/GitHub/bartjuw/GlazierLab/cc3d-twedit5/cc3d/twedit5/Plugins/CC3DProject/diffusion_solvers_descr.html</string>
+         </url>
+        </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item>
-       <spacer name="horizontalSpacer_6">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
      </layout>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="chem_fields_clear_horizontalGroupBox">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_14">
+       <item>
+        <widget class="QPushButton" name="clearFieldTablePB">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>Clear Table</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_6">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
     </item>
     <item>
      <widget class="QCheckBox" name="pdeSolverCallerCHB">
@@ -664,6 +691,16 @@ p, li { white-space: pre-wrap; }
         <item>
          <property name="text">
           <string>DiffusionSolverFE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>ReactionDiffusionSolverFVM</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>ReactionDiffusionSolver</string>
          </property>
         </item>
         <item>
@@ -2062,6 +2099,12 @@ p, li { white-space: pre-wrap; }
         <layout class="QHBoxLayout" name="horizontalLayout_12">
          <item>
           <widget class="QRadioButton" name="secrUniformRB_2">
+           <property name="toolTip">
+            <string>Secretion at a constant rate.</string>
+           </property>
+           <property name="toolTipDuration">
+            <number>-1</number>
+           </property>
            <property name="text">
             <string>uniform</string>
            </property>
@@ -2072,6 +2115,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <widget class="QRadioButton" name="secrOnContactRB_2">
+           <property name="toolTip">
+            <string>Secrete diffusant only on cell contact.</string>
+           </property>
            <property name="text">
             <string>on contact</string>
            </property>
@@ -2079,6 +2125,12 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <widget class="QRadioButton" name="secrConstConcRB_2">
+           <property name="toolTip">
+            <string>Constant concentration</string>
+           </property>
+           <property name="toolTipDuration">
+            <number>-1</number>
+           </property>
            <property name="text">
             <string>constant concentration</string>
            </property>

@@ -49,9 +49,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.cellTypeData = {}
         #self.tabs_arguments = {}
         self.diffusionFE_vals_dict = {}
-        #self.secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
-        self.field_table_dict = {}
-        #
+        self.field_table_dict = {}  # {field -> QTableWidget}
 
         if sys.platform.startswith('win'):
             self.setWizardStyle(QWizard.ClassicStyle)
@@ -1166,6 +1164,16 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         ymax_label = QLabel("Value at y = y.max")
         ymax_line_edit = QLineEdit("0.0")
         ymax_le = "y_max" + str(idx)
+
+        if self.yDimSB.value() > 1:  # Check if lattice has y dir
+            y_new_combo_by.setDisabled(False)
+            ymin_line_edit.setDisabled(False)
+            ymax_line_edit.setDisabled(False)
+        else:
+            y_new_combo_by.setDisabled(True)
+            ymin_line_edit.setDisabled(True)
+            ymax_line_edit.setDisabled(True)
+
         ymax_line_edit.setObjectName(ymax_le)
         ymin_group = QGroupBox("")
         ymin_layout = QBoxLayout(QBoxLayout.LeftToRight)
@@ -1710,8 +1718,11 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
             self.pde_field_data[chem_field_name] = solver_name
 
+        try:
+            solver_name
+        except NameError:
+            solver_name = None
         if solver_name == "DiffusionSolverFE":
-          #  self.diffusionFE_vals_dict = self.getCurrentDiffusionFE_Values()
             #  DiffusionFE Secretion:
             secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
             for row in range(self.secretion_DiffusionFE_Table.rowCount()):
@@ -1737,8 +1748,8 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                     secretion_diffusionFE_data[secr_field_name].append(diff_fe_secr_dict)
                 except LookupError:
                     secretion_diffusionFE_data[secr_field_name] = [diff_fe_secr_dict]
-        for field in secretion_diffusionFE_data:
-            self.diffusionFE_vals_dict[field]["Secretion"] = secretion_diffusionFE_data[field]
+            for field in secretion_diffusionFE_data:
+                self.diffusionFE_vals_dict[field]["Secretion"] = secretion_diffusionFE_data[field]
 
         self.secretion_data = {}  # format {field:[secrDict1,secrDict2,...]}
 
