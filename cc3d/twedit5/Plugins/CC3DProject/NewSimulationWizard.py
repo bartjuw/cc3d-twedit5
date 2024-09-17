@@ -1057,6 +1057,14 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 zMax = self.bcs_tab.findChild(QLineEdit, "z_max")
                 zMax.setDisabled(False)
 
+    def field_tab_changed(self, index):
+        if self.bcs_tab.currentIndex() != index:
+            self.bcs_tab.setCurrentIndex(index)
+        if self.ics_tab.currentIndex() != index:
+            self.ics_tab.setCurrentIndex(index)
+        if self.field_tab.currentIndex() != index:
+            self.field_tab.setCurrentIndex(index)
+
     def use_ics_file(self, index):
         tab_idx = self.ics_tab.currentIndex()
         icr = "ic_radio_btn_" + str(tab_idx)
@@ -1093,10 +1101,10 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         ic_file_group = QGroupBox("Initial values file")
         ic_file_layout = QBoxLayout(QBoxLayout.TopToBottom)
         icfr = "ic_radio_btn_" + str(idx)
-        ic_file_radio_btn = QRadioButton("Use ICs file")
+        ic_file_radio_btn = QRadioButton("Use Initial Concentrations file")
         ic_file_radio_btn.setObjectName(icfr)
         ic_file_radio_btn.toggled.connect(self.use_ics_file)
-        ic_file_edit = QLineEdit("Enter file path here")
+        ic_file_edit = QLineEdit("Enter file path here")  # TODO: validate filepath, or have function to assist picking file
         ic_file_edit.setObjectName("ic_file_edt_" + str(idx))
         ic_file_edit.setDisabled(True)
         ic_file_layout.addWidget(ic_file_radio_btn)
@@ -1261,8 +1269,10 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             for idx, field in enumerate(fields):
                 new_bc_dialog = self.getBC_Dialog(idx)  # Set BCs
                 self.bcs_tab.insertTab(idx, new_bc_dialog, field)
+                self.bcs_tab.currentChanged.connect(self.field_tab_changed)
                 new_ic_dialog = self.getIC_Dialog(idx)  # Set ICs:
                 self.ics_tab.insertTab(idx, new_ic_dialog, field)
+                self.ics_tab.currentChanged.connect(self.field_tab_changed)
                 table_widget = QTableWidget()
                 vh = QHeaderView(Qt.Vertical)
                 vh.hide()
@@ -1290,6 +1300,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                     decay_item.setTextAlignment(Qt.AlignCenter)
                     table_widget.setItem(row, 2, decay_item)
                 self.field_tab.insertTab(idx, table_widget, field)
+                self.field_tab.currentChanged.connect(self.field_tab_changed)
                 self.field_table_dict[field] = table_widget
 
     def getCurrentDiffusionFE_Values(self):
