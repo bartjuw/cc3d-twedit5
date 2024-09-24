@@ -1239,7 +1239,7 @@ class CC3DMLGeneratorBase:
 
         try:
             diffusion_algo_data = kwds['diffusantData']
-            print(diffusion_algo_data)
+            #print(diffusion_algo_data)
         except LookupError as e:
             diffusion_algo_data = {}
 
@@ -1263,8 +1263,7 @@ class CC3DMLGeneratorBase:
                     diff_field_coeffs = diff_field_params["Coefficients"]
                     diff_field_bcs = diff_field_params["BoundaryConditions"]
                     diff_field_ics = diff_field_params["InitialConditions"]
-                    if "Secretion" in diff_field_params:  # optional term
-                        diff_field_secretion = diff_field_params["Secretion"] # TODO check if present, optional term
+
                     global_coeffs = diff_field_coeffs["Global (default value)"]
                     diff_data.ElementCC3D("GlobalDiffusionConstant", {}, global_coeffs["GlobalDiffusionCoefficient"])
                     diff_data.ElementCC3D("GlobalDecayConstant", {}, global_coeffs["GlobalDecayCoefficient"])
@@ -1364,6 +1363,23 @@ class CC3DMLGeneratorBase:
                                                                                         'Value': bc_value[min_max]})
                                             else:  # Periodic BC
                                                 plane_z_elem.ElementCC3D("Periodic")
+                    #  Secretion info:
+                    if "Secretion" in diff_field_params:  # optional term
+                        diff_field_secr_list = diff_field_params["Secretion"]
+                        secr_specified = True
+                        # print(diff_field_secr_list)
+                        for secr_dict in diff_field_secr_list:
+                            rate = secr_dict["Rate"]
+                            attribute_dict = {"Type": secr_dict["CellType"]}
+                            if secr_dict["SecretionType"] == 'uniform':
+                                secr_data.ElementCC3D("Secretion", attribute_dict, rate)
+
+                            elif secr_dict["SecretionType"] == 'on contact':
+                                attribute_dict["SecreteOnContactWith"] = secr_dict["OnContactWith"]
+                                secr_data.ElementCC3D("SecretionOnContact", attribute_dict, rate)
+
+                            elif secr_dict["SecretionType"] == 'constant concentration':
+                                secr_data.ElementCC3D("ConstantConcentration", attribute_dict, rate)
 
                 else:  # Default values:
                     diff_data.ElementCC3D("GlobalDiffusionConstant", {}, 0.1)
@@ -1419,7 +1435,8 @@ class CC3DMLGeneratorBase:
                     secr_data.addComment('newline')
                     secr_data.addComment('Uniform secretion Definition')
                     for type_name in cell_type_names:
-                        secr_data.ElementCC3D("Secretion", {"Type": type_name}, 0.1)
+                        secr_uniform_elem = secr_data.ElementCC3D("Secretion", {"Type": type_name}, 0.1)
+                        secr_uniform_elem.commentOutElement()
 
                     secrete_on_contact_with = ''
                     example_type = ''

@@ -18,6 +18,10 @@ MAC = "qt_mac_set_native_menubar" in dir()
 DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Diffusion coefficients and boundary conditions (PDE Solvers Specification)"
 SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME = "Secretion in DiffusionFE plugin"
 
+CONSTANT_BC = "Constant value (Dirichlet) "
+CONSTANT_DERIVATIVE_BC = "Constant derivative value (von Neumann)"
+PERIODIC_BC = "Periodic BC"
+
 class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard):
     def __init__(self, parent=None):
         super(NewSimulationWizard, self).__init__(parent)
@@ -1124,9 +1128,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         x_new_combo_bx = QComboBox(x_group)
         xc = "x_combo" + str(idx)
         x_new_combo_bx.setObjectName(xc)
-        x_new_combo_bx.addItem("Periodic BC")
-        x_new_combo_bx.addItem("Constant value")
-        x_new_combo_bx.addItem("Constant derivative value")
+        x_new_combo_bx.addItem(PERIODIC_BC)
+        x_new_combo_bx.addItem(CONSTANT_BC)
+        x_new_combo_bx.addItem(CONSTANT_DERIVATIVE_BC)
         x_new_combo_bx.setCurrentIndex(2) # set to Constant derivative
         x_new_combo_bx.currentIndexChanged.connect(self.x_bcTypeChanged)
         x_layout.addWidget(x_new_combo_bx, 0)
@@ -1159,9 +1163,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         y_new_combo_by = QComboBox()
         yc = "y_combo" + str(idx)
         y_new_combo_by.setObjectName(yc)
-        y_new_combo_by.addItem("Periodic BC")
-        y_new_combo_by.addItem("Constant value")
-        y_new_combo_by.addItem("Constant derivative value")
+        y_new_combo_by.addItem(PERIODIC_BC)
+        y_new_combo_by.addItem(CONSTANT_BC)
+        y_new_combo_by.addItem(CONSTANT_DERIVATIVE_BC)
         y_new_combo_by.setCurrentIndex(2)  # set to Constant derivative
         y_new_combo_by.currentIndexChanged.connect(self.y_bcTypeChanged)
         y_layout.addWidget(y_new_combo_by, 0)
@@ -1204,9 +1208,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         z_new_combo_bz = QComboBox()
         zc = "z_combo" + str(idx)
         z_new_combo_bz.setObjectName(zc)
-        z_new_combo_bz.addItem("Periodic BC")
-        z_new_combo_bz.addItem("Constant value")
-        z_new_combo_bz.addItem("Constant derivative value")
+        z_new_combo_bz.addItem(PERIODIC_BC)
+        z_new_combo_bz.addItem(CONSTANT_BC)
+        z_new_combo_bz.addItem(CONSTANT_DERIVATIVE_BC)
         z_new_combo_bz.setCurrentIndex(2)  # set to Constant derivative
         z_layout.addWidget(z_new_combo_bz, 0)
         zmin_label = QLabel("Value at z = z.min")
@@ -1343,9 +1347,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                                         boundary_type = "Periodic"
                                     else:
                                         if c_box.currentIndex() == 1:  # constant value boundary
-                                            boundary_type = "ConstantValue"
+                                            boundary_type = "ConstantValue"  # (Dirichlet)
                                         else:                          # Constant derivative boundary
-                                            boundary_type = "ConstantDerivative"
+                                            boundary_type = "ConstantDerivative"  # (von Neumann)
                                     lines = child.findChildren(QLineEdit)
                                     axis_vals = {}
                                     for new_line in lines:
