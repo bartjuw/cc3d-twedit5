@@ -15,7 +15,7 @@ from cc3d.twedit5.Plugins.CC3DMLGenerator.CC3DMLGeneratorBase import CC3DMLGener
 from .CC3DPythonGenerator import CC3DPythonGenerator
 
 MAC = "qt_mac_set_native_menubar" in dir()
-DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Diffusion coefficients and boundary conditions (PDE Solvers Specification)"
+DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Chemical field diffusion coefficients and boundary conditions (PDE Solvers Specification)"
 SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME = "Secretion in DiffusionFE plugin"
 
 CONSTANT_BC = "Constant value (Dirichlet) "
@@ -1282,7 +1282,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 vh.hide()
                 table_widget.setVerticalHeader(vh)  # Hide row numbers
                 table_widget.setColumnCount(3)
-                table_widget.setHorizontalHeaderLabels(["Cell or Area/Volume", "Diffusion coefficient", "Decay coefficient"])
+                table_widget.setHorizontalHeaderLabels(["Cell or Area/Volume", "Diffusion coefficient (pixels^2 per mcs)", "Decay coefficient (1/mcs)"])
                 table_widget.horizontalHeader().setStretchLastSection(True)
                 table_widget.horizontalHeader().setSectionResizeMode(
                     QHeaderView.Stretch)
