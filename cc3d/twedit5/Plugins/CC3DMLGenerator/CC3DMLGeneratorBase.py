@@ -1428,8 +1428,8 @@ class CC3DMLGeneratorBase:
                 #  Secretion defaults:
                 if not secr_specified:
                     secr_data.addComment(
-                        'When secretion is defined inside DissufionSolverFE all secretion constants are scaled '
-                        'automaticaly to account for the extra calls to the diffusion step '
+                        'When secretion is defined inside DiffusionSolverFE all secretion constants are scaled '
+                        'automatically to account for the extra calls to the diffusion step '
                         'when handling large diffusion constants')
 
                     secr_data.addComment('newline')
@@ -1918,8 +1918,8 @@ class CC3DMLGeneratorBase:
                 secr_data = diff_field_elem.ElementCC3D("SecretionData")
 
                 secr_data.addComment(
-                    'Secretion has to be defined inside SteadyStateDissufion solver - '
-                    'Secretion Plugin doe s not work with this solver.')
+                    'Secretion has to be defined inside SteadyStateDiffusion solver - '
+                    'Secretion Plugin does not work with this solver.')
 
                 secr_data.addComment('newline')
                 secr_data.addComment('Uniform secretion Definition')
