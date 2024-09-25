@@ -736,7 +736,7 @@ p, li { white-space: pre-wrap; }
     </item>
    </layout>
   </widget>
-  <widget class="QWizardPage" name="wizardPage">
+  <widget class="QWizardPage" name="wizardPage_cell_properties_behaviors">
    <property name="title">
     <string>Cell Properties and Behaviors</string>
    </property>
