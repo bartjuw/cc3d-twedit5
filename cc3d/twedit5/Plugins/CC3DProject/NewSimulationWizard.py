@@ -1111,8 +1111,10 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         ic_file_edit = QLineEdit("Enter file path here")  # TODO: validate filepath, or have function to assist picking file
         ic_file_edit.setObjectName("ic_file_edt_" + str(idx))
         ic_file_edit.setDisabled(True)
+        ic_file_info_label = QLabel("Format of file is rows of numbers corresponding to position of each pixel and concentration: x y z c")
         ic_file_layout.addWidget(ic_file_radio_btn)
         ic_file_layout.addWidget(ic_file_edit)
+        ic_file_layout.addWidget(ic_file_info_label)
         ic_file_group.setLayout(ic_file_layout)
 
         ic_layout.addWidget(ic_file_group)
@@ -1538,7 +1540,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 for field_name in fields:
                     self.secrFieldCB.addItem(field_name)
 
-            # DiffusionFE secretion plugin
+            # DiffusionFE secretion plugin ( _2 )
             self.secrFieldCB_2.clear()
             self.secrCellTypeCB_2.clear()
             self.secrOnContactCellTypeCB_2.clear()
@@ -1579,9 +1581,13 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             else:
                 self.removePage(self.get_page_id_by_name("AdhesionFlex Plugin"))
 
-            if len(self.diffusantDict.items()) > 0:  # VALIDATE ICs and BCs
-                self.setPage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME), self.get_page_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
-                self.setPage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME), self.get_page_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
+            if len(self.diffusantDict.items()) > 0:  # VALIDATE ICs and BCs,
+                solver_found = False
+                for solver_name, fields in self.diffusantDict.items():  # Check for use of DiffusionSolverFE
+                    if solver_name == "DiffusionSolverFE" and not solver_found:
+                        solver_found = True
+                        self.setPage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME), self.get_page_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
+                        self.setPage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME), self.get_page_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
                 self.populate_pde_solver_entries()
             else:
                 self.removePage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
@@ -1840,7 +1846,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         if self.pythonXMLRB.isChecked():
             xml_file_name = os.path.join(self.simulationFilesDir, name + ".xml")
             xml_generator.saveCC3DXML(xml_file_name)
-
+# TODO if IC file requested then generate a template here? Also put in the default path (simulationFilesDir) in the dialog (lineEdit)
             simulation_element.ElementCC3D("XMLScript", {"Type": "XMLScript"},
 
                                           self.getRelativePathWRTProjectDir(xml_file_name))
