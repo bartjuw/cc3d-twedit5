@@ -1226,6 +1226,23 @@ class CC3DMLGeneratorBase:
 
         m_element.ElementCC3D("ZMargin", {}, 7)
 
+    #  Write default ic file with format 'x y z conc'
+    def write_out_ic_file(self, ic_file_path_name, x_dim, y_dim, z_dim):
+        try:
+            ic_file_object = open(rf"{ic_file_path_name}", "w")
+            for x in range(x_dim):
+                for y in range(y_dim):
+                    if z_dim > 1:
+                        for z in range(z_dim):
+                            ic_file_object.write(str(x) + " " + str(y) + " " + str(z) + " " + "0.0\n")
+                    else:
+                        ic_file_object.write(str(x) + " " + str(y) + " " + "0.0\n")
+
+            ic_file_object.close
+        except Exception as e:
+            error_str = "Error opening, writing file: " + ic_file_path_name + ": "
+            print(error_str, e)
+
     @GenerateDecorator('Steppable', ['Type', 'DiffusionSolverFE'])
     def generateDiffusionSolverFE(self, *args, **kwds):
 
@@ -1271,6 +1288,7 @@ class CC3DMLGeneratorBase:
                         conc_eqn_elem = diff_data.ElementCC3D("InitialConcentrationExpression", {}, diff_field_ics["InitialConcentrationExpression"] )
                     else:
                         if "ConcentrationFileName" in diff_field_ics:
+                            self.write_out_ic_file(diff_field_ics["ConcentrationFileName"], self.gpd["Dim"][0], self.gpd["Dim"][1], self.gpd["Dim"][2])
                             conc_field_name_elem = diff_data.ElementCC3D("ConcentrationFileName", {}, diff_field_ics["ConcentrationFileName"])
                     for type_name in cell_type_names:
                         field_coeffs = diff_field_coeffs[type_name]

@@ -15,8 +15,10 @@ from cc3d.twedit5.Plugins.CC3DMLGenerator.CC3DMLGeneratorBase import CC3DMLGener
 from .CC3DPythonGenerator import CC3DPythonGenerator
 
 MAC = "qt_mac_set_native_menubar" in dir()
+CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME = "Chemical Fields (Diffusants)"
 DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Chemical field diffusion coefficients and boundary conditions (PDE Solvers Specification)"
 SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME = "Secretion in DiffusionFE plugin"
+CELL_TYPE_SPEC_PAGE_ID_BY_NAME = "Cell Type Specification"
 
 CONSTANT_BC = "Constant value (Dirichlet) "
 CONSTANT_DERIVATIVE_BC = "Constant derivative value (von Neumann)"
@@ -42,7 +44,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
         # This dictionary holds references to certain pages e.g. plugin configuration pages are inserted on demand
         # and access to those pages is facilitated via self.pageDict
-
         self.pageDict = {}
 
         self.updateUi()
@@ -51,7 +52,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.diffusantDict = {}
         self.chemotaxisData = {}
         self.cellTypeData = {}
-        #self.tabs_arguments = {}
+        self.field_ic_fileDict = {}  # field_name -> ic file name
         self.diffusionFE_vals_dict = {}
         self.field_table_dict = {}  # {field -> QTableWidget}
 
@@ -70,7 +71,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
     def keyPressEvent(self, event):
 
-        if self.currentId() == self.get_page_id_by_name('Cell Type Specification'):
+        if self.currentId() == self.get_page_id_by_name(CELL_TYPE_SPEC_PAGE_ID_BY_NAME):
             cell_type = str(self.cellTypeLE.text())
             cell_type = cell_type.strip()
 
@@ -83,7 +84,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                     next_button = self.button(QWizard.NextButton)
                     next_button.clicked.emit(True)
 
-        elif self.currentId() == self.get_page_id_by_name("Chemical Fields (Diffusants)"):
+        elif self.currentId() == self.get_page_id_by_name(CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME):
 
             field_name = str(self.fieldNameLE.text())
             field_name = field_name.strip()
@@ -988,6 +989,20 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 self.removePage(page_id)
                 break
 
+    def checkIfNumber(self, value):
+        if value == ".":
+            return True
+        if value.isdecimal():
+            return True
+        try:
+            float(value)
+            return True
+        except ValueError:
+            QMessageBox.warning(self, "Not a number",
+                                    "Please specify a number for the value",
+                                    QMessageBox.Ok)
+            return False
+
     def x_bcTypeChanged(self, index):
         tab_idx = self.bcs_tab.currentIndex()
         xc = "x_combo" + str(tab_idx)
@@ -1012,12 +1027,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 xMax = self.bcs_tab.findChild(QLineEdit, xmax_le)
                 xMax.setDisabled(False)
 
-      #  print(cur_text)
 
     def y_bcTypeChanged(self, index):
         tab_idx = self.bcs_tab.currentIndex()
-    #    yc = "y_combo" + str(tab_idx)
-    #    current_combo = self.bcs_tab.findChild(QComboBox, yc)
         ymin_le = "y_min" + str(tab_idx)
         ymax_le = "y_max" + str(tab_idx)
         if index == 0:  # periodic boundary
@@ -1036,7 +1048,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 yMin.setDisabled(False)
                 yMax = self.bcs_tab.findChild(QLineEdit, ymax_le)
                 yMax.setDisabled(False)
-        #cur_text = current_combo.itemText(index)
 
     def z_bcTypeChanged(self, index):
         tab_idx = self.bcs_tab.currentIndex()
@@ -1069,6 +1080,21 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         if self.field_tab.currentIndex() != index:
             self.field_tab.setCurrentIndex(index)
 
+    def ics_file_path_changed(self):
+        tab_idx = self.ics_tab.currentIndex()
+        field = self.ics_tab.tabText(tab_idx)
+        icfe = "ic_file_edt_" + str(tab_idx)
+        current_fe = self.ics_tab.findChild(QLineEdit, icfe)
+        ic_file = current_fe.text()  # contains full (absolute) file path
+        print(ic_file)
+        #  check if valid file location:
+        if self.is_path_exists_or_creatable(ic_file):
+            self.field_ic_fileDict[field] = ic_file
+        else:
+            # put prev file path back:
+            current_fe.setText(self.field_ic_fileDict[field])
+
+
     def use_ics_file(self, index):
         tab_idx = self.ics_tab.currentIndex()
         icr = "ic_radio_btn_" + str(tab_idx)
@@ -1084,8 +1110,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             current_fi.setDisabled(True)
             current_le.setDisabled(False)
 
-
-
     def getIC_Dialog(self, idx):
         ic_group = QGroupBox("")
         ic_group.setObjectName("ic_group_" + str(idx))
@@ -1097,6 +1121,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         ic_val_edit = QLineEdit("0.0")
         icv = "ic_val_" + str(idx)
         ic_val_edit.setObjectName(icv)
+        ic_val_edit.textChanged.connect(self.checkIfNumber)
         ic_val_layout.addWidget(ic_val_label)
         ic_val_layout.addWidget(ic_val_edit)
         ic_val_group.setLayout(ic_val_layout)
@@ -1108,9 +1133,16 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         ic_file_radio_btn = QRadioButton("Use Initial Concentrations file")
         ic_file_radio_btn.setObjectName(icfr)
         ic_file_radio_btn.toggled.connect(self.use_ics_file)
-        ic_file_edit = QLineEdit("Enter file path here")  # TODO: validate filepath, or have function to assist picking file
+        field_name = self.bcs_tab.tabText(idx)  # ics and bcs use same field names
+        default_file = str(self.dirLE.text()).strip() + str(self.nameLE.text()).strip() + "/"
+      #  if sys.platform.startswith("win"): Python takes care of this?
+      #      default_file = default_file + "\\"
+        default_file = default_file + "init_conditions_" + field_name + ".txt"
+        self.field_ic_fileDict[field_name] = default_file
+        ic_file_edit = QLineEdit(default_file)
         ic_file_edit.setObjectName("ic_file_edt_" + str(idx))
         ic_file_edit.setDisabled(True)
+        ic_file_edit.editingFinished.connect(self.ics_file_path_changed)
         ic_file_info_label = QLabel("Format of file is rows of numbers corresponding to position of each pixel and concentration: x y z c")
         ic_file_layout.addWidget(ic_file_radio_btn)
         ic_file_layout.addWidget(ic_file_edit)
@@ -1140,10 +1172,12 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         xmin_line_edit = QLineEdit("0.0")
         xmin_le = "x_min" + str(idx)
         xmin_line_edit.setObjectName(xmin_le)
+        xmin_line_edit.textChanged.connect(self.checkIfNumber)
         xmax_label = QLabel("Value at x = x.max")
         xmax_line_edit = QLineEdit("0.0")
         xmax_le = "x_max" + str(idx)
         xmax_line_edit.setObjectName(xmax_le)
+        xmax_line_edit.textChanged.connect(self.checkIfNumber)
         xmin_group = QGroupBox("")
         xmin_layout = QBoxLayout(QBoxLayout.LeftToRight)
         xmin_layout.addWidget(xmin_label)
@@ -1175,8 +1209,10 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         ymin_line_edit = QLineEdit("0.0")
         ymin_le = "y_min" + str(idx)
         ymin_line_edit.setObjectName(ymin_le)
+        ymin_line_edit.textChanged.connect(self.checkIfNumber)
         ymax_label = QLabel("Value at y = y.max")
         ymax_line_edit = QLineEdit("0.0")
+        ymax_line_edit.textChanged.connect(self.checkIfNumber)
         ymax_le = "y_max" + str(idx)
 
         if self.yDimSB.value() > 1:  # Check if lattice has y dir
@@ -1219,8 +1255,10 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         zmin_line_edit = QLineEdit("0.0")
         zmin_le = "z_min" + str(idx)
         zmin_line_edit.setObjectName(zmin_le)
+        zmin_line_edit.textChanged.connect(self.checkIfNumber)
         zmax_label = QLabel("Value at z = z.max")
         zmax_line_edit = QLineEdit("0.0")
+        zmax_line_edit.textChanged.connect(self.checkIfNumber)
         xmax_le = "z_max" + str(idx)
         z_val = self.zDimSB.value()  # Check if lattice has z dir
         if z_val > 1:
@@ -1392,6 +1430,30 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         return diffusion_vals_dict
 
 
+    def is_path_creatable(self, pathname: str) -> bool:
+        '''
+        `True` if the current user has sufficient permissions to create the passed
+        pathname; `False` otherwise.
+        '''
+        # Parent directory of the passed path. If empty, we substitute the current
+        # working directory (CWD) instead.
+        dirname = os.path.dirname(pathname) or os.getcwd()
+        return os.access(dirname, os.W_OK)
+
+    def is_path_exists_or_creatable(self, pathname: str) -> bool:
+        '''
+        `True` if the passed pathname is a valid pathname for the current OS _and_
+        either currently exists or is hypothetically creatable; `False` otherwise.
+        '''
+        try:
+            path = os.path.dirname(pathname)  # confirm there is no filename appended to the end of dir path
+            return (os.path.exists(path) or self.is_path_creatable(path))
+        # Report failure on non-fatal filesystem complaints (e.g., connection
+        # timeouts, permissions issues) implying this path to be inaccessible. All
+        # other exceptions are unrelated fatal issues and should not be caught here.
+        except OSError:
+            return False
+
     def validateCurrentPage(self):
 
         print("THIS IS VALIDATE FOR PAGE ", self.currentId)
@@ -1475,7 +1537,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
             return True
 
-        if self.currentId() == self.get_page_id_by_name("Cell Type Specification"):
+        if self.currentId() == self.get_page_id_by_name(CELL_TYPE_SPEC_PAGE_ID_BY_NAME):
             # we only extract types from table here - it is not a validation strictly speaking
             # extract cell type information form the table
 
@@ -1493,7 +1555,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
             return True
 
-        if self.currentId() == self.get_page_id_by_name("Chemical Fields (Diffusants)"):
+        if self.currentId() == self.get_page_id_by_name(CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME):
 
             # we only extract diffusants from table here - it is not a validation strictly speaking
             # extract diffusants information form the table
@@ -1785,11 +1847,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 rate = 0.0
 
             on_contact_with = str(self.secretionTable.item(row, 3).text())
-
             secretion_type = str(self.secretionTable.item(row, 4).text())
 
             secr_dict = {}
-
             secr_dict["CellType"] = cell_type
             secr_dict["Rate"] = rate
             secr_dict["OnContactWith"] = on_contact_with
@@ -1799,8 +1859,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 self.secretion_data[secr_field_name].append(secr_dict)
             except LookupError:
                 self.secretion_data[secr_field_name] = [secr_dict]
-
-
 
         self.chemotaxisData = {}  # format {field:[chemDict1,chemDict2,...]}
 
@@ -1823,7 +1881,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
             chemotaxis_type = str(self.chamotaxisTable.item(row, 5).text())
             chem_dict = {}
-
             chem_dict["CellType"] = cell_type
             chem_dict["Lambda"] = lambda_
             chem_dict["ChemotaxTowards"] = chemotax_towards
@@ -1846,7 +1903,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         if self.pythonXMLRB.isChecked():
             xml_file_name = os.path.join(self.simulationFilesDir, name + ".xml")
             xml_generator.saveCC3DXML(xml_file_name)
-# TODO if IC file requested then generate a template here? Also put in the default path (simulationFilesDir) in the dialog (lineEdit)
             simulation_element.ElementCC3D("XMLScript", {"Type": "XMLScript"},
 
                                           self.getRelativePathWRTProjectDir(xml_file_name))
@@ -1857,7 +1913,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             # generate Python ------------------------------------------------------------------------------------
 
             python_generator = CC3DPythonGenerator(xml_generator)
-
             python_generator.set_python_only_flag(self.pythonOnlyRB.isChecked())
 
             self.generateSteppablesCode(python_generator)

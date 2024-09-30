@@ -23,6 +23,9 @@
    <property name="title">
     <string>CompuCell3D Simulation Wizard</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <spacer name="verticalSpacer">
@@ -167,6 +170,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>General Simulation Properties</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_10">
     <item>
      <spacer name="horizontalSpacer_15">
@@ -483,6 +489,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>Cell Type Specification</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_4">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -572,6 +581,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>Chemical Fields (Diffusants)</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_11">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -740,6 +752,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>Cell Properties and Behaviors</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QGridLayout" name="gridLayout_8">
     <item row="0" column="1" rowspan="2">
      <widget class="QGroupBox" name="groupBox_2">
@@ -1338,6 +1353,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>Secretion Plugin</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_17">
     <item>
      <widget class="QTableWidget" name="secretionTable">
@@ -1543,6 +1561,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>Chemotaxis Plugin</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_15">
     <item>
      <widget class="QTableWidget" name="chamotaxisTable">
@@ -1764,6 +1785,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>AdhesionFlex Plugin</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_7">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -1862,6 +1886,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>ContactMultiCad Plugin</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_8">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_10">
@@ -1940,7 +1967,7 @@ p, li { white-space: pre-wrap; }
     <string>Chemical field diffusion coefficients and boundary conditions (PDE Solvers Specification)</string>
    </property>
    <attribute name="pageId">
-    <string notr="true">Diffusion_plugin</string>
+    <string notr="true"/>
    </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_22">
     <item>
@@ -2032,6 +2059,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>Secretion in DiffusionFE plugin</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_24">
     <item>
      <widget class="QLabel" name="secretion_diffuseFE_info_label">
@@ -2309,6 +2339,9 @@ p, li { white-space: pre-wrap; }
    <property name="title">
     <string>Configuration Complete!</string>
    </property>
+   <attribute name="pageId">
+    <string notr="true"/>
+   </attribute>
    <layout class="QVBoxLayout" name="verticalLayout_21">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_20">
