@@ -707,12 +707,17 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <property name="text">
+          <string>ReactionDiffusionSolverFE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>ReactionDiffusionSolverFVM</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>ReactionDiffusionSolverFE</string>
+          <string>SteadyStateDiffusionSolver</string>
          </property>
         </item>
         <item>
@@ -728,11 +733,6 @@ p, li { white-space: pre-wrap; }
         <item>
          <property name="text">
           <string>KernelDiffusionSolver</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>SteadyStateDiffusionSolver</string>
          </property>
         </item>
        </widget>
