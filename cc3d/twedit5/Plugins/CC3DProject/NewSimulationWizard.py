@@ -19,6 +19,7 @@ CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME = "Chemical Fields (Diffusants)"
 DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Chemical field diffusion coefficients and boundary conditions (PDE Solvers Specification)"
 SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME = "Secretion in DiffusionFE plugin"
 CELL_TYPE_SPEC_PAGE_ID_BY_NAME = "Cell Type Specification"
+CELL_PROP_BEHAVIORS_PAGE_ID_BY_NAME = "Cell Properties and Behaviors"
 
 CONSTANT_BC = "Constant value (Dirichlet) "
 CONSTANT_DERIVATIVE_BC = "Constant derivative value (von Neumann)"
@@ -65,9 +66,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         :param error_message:
         :return:
         """
-
         QMessageBox.warning(self, 'Invalid Identifier', error_message)
-
 
     def keyPressEvent(self, event):
 
@@ -1536,7 +1535,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 self.connect2DCHB.setChecked(False)
 
             return True
-
+       # curID = self.currentId()
         if self.currentId() == self.get_page_id_by_name(CELL_TYPE_SPEC_PAGE_ID_BY_NAME):
             # we only extract types from table here - it is not a validation strictly speaking
             # extract cell type information form the table
@@ -1553,23 +1552,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
                 self.typeTable.append([cell_type, freeze])
 
-            return True
-
-        if self.currentId() == self.get_page_id_by_name(CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME):
-
-            # we only extract diffusants from table here - it is not a validation strictly speaking
-            # extract diffusants information form the table
-            self.diffusantDict = {}
-
-            for row in range(self.fieldTable.rowCount()):
-                field = str(self.fieldTable.item(row, 0).text())
-                solver = str(self.fieldTable.item(row, 1).text())
-
-                try:
-                    self.diffusantDict[solver].append(field)
-                except LookupError:
-                    self.diffusantDict[solver] = [field]
-
             # at this point we can fill all the cell types and fields widgets on subsequent pages
 
             self.chemCellTypeCB.clear()
@@ -1584,13 +1566,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
                 self.chemTowardsCellTypeCB.addItem(cell_type_tuple[0])
 
-            for solver_name, fields in self.diffusantDict.items():
-
-                for field_name in fields:
-                    self.chemFieldCB.addItem(field_name)
-
             # secretion plugin
-
             self.secrFieldCB.clear()
             self.secrCellTypeCB.clear()
             self.secrOnContactCellTypeCB.clear()
@@ -1598,21 +1574,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             for cell_type_tuple in self.typeTable:
                 self.secrCellTypeCB.addItem(cell_type_tuple[0])
                 self.secrOnContactCellTypeCB.addItem(cell_type_tuple[0])
-            for solver_name, fields in self.diffusantDict.items():
-                for field_name in fields:
-                    self.secrFieldCB.addItem(field_name)
-
-            # DiffusionFE secretion plugin ( _2 )
-            self.secrFieldCB_2.clear()
-            self.secrCellTypeCB_2.clear()
-            self.secrOnContactCellTypeCB_2.clear()
-
-            for cell_type_tuple in self.typeTable:
-                self.secrCellTypeCB_2.addItem(cell_type_tuple[0])
-                self.secrOnContactCellTypeCB_2.addItem(cell_type_tuple[0])
-            for solver_name, fields in self.diffusantDict.items():
-                for field_name in fields:
-                    self.secrFieldCB_2.addItem(field_name)
 
             return True
 
@@ -1639,9 +1600,42 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
 
             if self.adhesionFlexCHB.isChecked():
                 self.setPage(self.get_page_id_by_name("AdhesionFlex Plugin"), self.get_page_by_name("AdhesionFlex Plugin"))
-
             else:
                 self.removePage(self.get_page_id_by_name("AdhesionFlex Plugin"))
+            return True
+    #    sec_id = self.currentId()
+    #    chem_field_id = self.get_page_id_by_name(CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME)
+        if self.currentId() == self.get_page_id_by_name(CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME):
+            # we only extract diffusants from table here - it is not a validation strictly speaking
+            self.diffusantDict = {}
+            for row in range(self.fieldTable.rowCount()):
+                field = str(self.fieldTable.item(row, 0).text())
+                solver = str(self.fieldTable.item(row, 1).text())
+
+                try:
+                    self.diffusantDict[solver].append(field)
+                except LookupError:
+                    self.diffusantDict[solver] = [field]
+
+            for solver_name, fields in self.diffusantDict.items():
+                for field_name in fields:
+                    self.chemFieldCB.addItem(field_name)
+
+            for solver_name, fields in self.diffusantDict.items():
+                for field_name in fields:
+                    self.secrFieldCB.addItem(field_name)
+
+             # DiffusionFE secretion plugin ( _2 )
+            self.secrFieldCB_2.clear()
+            self.secrCellTypeCB_2.clear()
+            self.secrOnContactCellTypeCB_2.clear()
+
+            for cell_type_tuple in self.typeTable:
+                self.secrCellTypeCB_2.addItem(cell_type_tuple[0])
+                self.secrOnContactCellTypeCB_2.addItem(cell_type_tuple[0])
+            for solver_name, fields in self.diffusantDict.items():
+                for field_name in fields:
+                    self.secrFieldCB_2.addItem(field_name)
 
             if len(self.diffusantDict.items()) > 0:  # VALIDATE ICs and BCs,
                 solver_found = False
