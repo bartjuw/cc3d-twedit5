@@ -712,7 +712,7 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <property name="text">
-          <string>ReactionDiffusionSolver</string>
+          <string>ReactionDiffusionSolverFE</string>
          </property>
         </item>
         <item>
