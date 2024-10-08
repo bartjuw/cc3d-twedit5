@@ -1029,7 +1029,7 @@ class Ui_NewSimulationWizard(object):
         self.label_19.setText(_translate("NewSimulationWizard", "Solver"))
         self.solverCB.setItemText(0, _translate("NewSimulationWizard", "DiffusionSolverFE"))
         self.solverCB.setItemText(1, _translate("NewSimulationWizard", "ReactionDiffusionSolverFVM"))
-        self.solverCB.setItemText(2, _translate("NewSimulationWizard", "ReactionDiffusionSolver"))
+        self.solverCB.setItemText(2, _translate("NewSimulationWizard", "ReactionDiffusionSolverFE"))
         self.solverCB.setItemText(3, _translate("NewSimulationWizard", "FlexibleDiffusionSolverFE"))
         self.solverCB.setItemText(4, _translate("NewSimulationWizard", "FastDiffusionSolver2DFE"))
         self.solverCB.setItemText(5, _translate("NewSimulationWizard", "KernelDiffusionSolver"))
