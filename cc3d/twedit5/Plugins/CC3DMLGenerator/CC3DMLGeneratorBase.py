@@ -1015,7 +1015,9 @@ class CC3DMLGeneratorBase:
     def generateSecretionPlugin(self, *args, **kwds):
 
         m_element = self.mElement
-
+        for elem in args:
+            if elem == "pythonControl":
+                return   # do not add anything else to xml file.
         try:
             secretion_data = kwds['secretionData']
         except LookupError:
@@ -1267,9 +1269,9 @@ class CC3DMLGeneratorBase:
         m_element.addComment("Specification of PDE solvers")
 
         cell_type_names = self.decorated_cell_type_names
-
         for field_name, solver in pde_field_data.items():
             secr_specified = False
+
             if solver == 'DiffusionSolverFE':
                 diff_field_elem = m_element.ElementCC3D("DiffusionField", {"Name": field_name})
                 diff_data = diff_field_elem.ElementCC3D("DiffusionData")
@@ -1383,21 +1385,31 @@ class CC3DMLGeneratorBase:
                                                 plane_z_elem.ElementCC3D("Periodic")
                     #  Secretion info:
                     if "Secretion" in diff_field_params:  # optional term
-                        diff_field_secr_list = diff_field_params["Secretion"]
-                        secr_specified = True
-                        # print(diff_field_secr_list)
-                        for secr_dict in diff_field_secr_list:
-                            rate = secr_dict["Rate"]
-                            attribute_dict = {"Type": secr_dict["CellType"]}
-                            if secr_dict["SecretionType"] == 'uniform':
-                                secr_data.ElementCC3D("Secretion", attribute_dict, rate)
+                        diff_field_secr_dict = diff_field_params["Secretion"]
+                        #secr_specified = True
+                        for field in diff_field_secr_dict:  # should be only one field in dict
+                            diff_field_secr_list = diff_field_secr_dict[field]
+                            for secr_dict in diff_field_secr_list:
+                                #max_uptake = secr_dict["MaxUptake"]
+                                uptake_attributes_dict = {}
+                                uptake_attributes_dict["Type"] = secr_dict["CellType"]
+                                uptake_attributes_dict["MaxUptake"] = secr_dict["MaxUptake"]
+                                uptake_attributes_dict["RelativeUptakeRate"] = secr_dict["MaxUptake"]
+                                secr_data.ElementCC3D("Uptake", uptake_attributes_dict, "")
+                                rate = secr_dict["Rate"]
+                                attribute_dict = {"Type": secr_dict["CellType"]}
+                                if secr_dict["SecretionType"] == 'uniform':
+                                    secr_specified = True
+                                    secr_data.ElementCC3D("Secretion", attribute_dict, rate)
 
-                            elif secr_dict["SecretionType"] == 'on contact':
-                                attribute_dict["SecreteOnContactWith"] = secr_dict["OnContactWith"]
-                                secr_data.ElementCC3D("SecretionOnContact", attribute_dict, rate)
+                                elif secr_dict["SecretionType"] == 'on contact':
+                                    secr_specified = True
+                                    attribute_dict["SecreteOnContactWith"] = secr_dict["OnContactWith"]
+                                    secr_data.ElementCC3D("SecretionOnContact", attribute_dict, rate)
 
-                            elif secr_dict["SecretionType"] == 'constant concentration':
-                                secr_data.ElementCC3D("ConstantConcentration", attribute_dict, rate)
+                                elif secr_dict["SecretionType"] == 'constant concentration':
+                                    secr_specified = True
+                                    secr_data.ElementCC3D("ConstantConcentration", attribute_dict, rate)
 
                 else:  # Default values:
                     diff_data.ElementCC3D("GlobalDiffusionConstant", {}, 0.1)

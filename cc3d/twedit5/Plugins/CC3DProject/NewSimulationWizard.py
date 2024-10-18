@@ -17,13 +17,15 @@ from .CC3DPythonGenerator import CC3DPythonGenerator
 MAC = "qt_mac_set_native_menubar" in dir()
 CHEMICAL_FIELDS_DIFFUSANTS_PAGE_ID_BY_NAME = "Chemical Fields (Diffusants)"
 DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME = "Chemical field diffusion coefficients and boundary conditions (PDE Solvers Specification)"
-SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME = "Secretion in DiffusionFE plugin"
+SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME = "Secretion in DiffusionFE plugin"  #  DO not use
 CELL_TYPE_SPEC_PAGE_ID_BY_NAME = "Cell Type Specification"
 CELL_PROP_BEHAVIORS_PAGE_ID_BY_NAME = "Cell Properties and Behaviors"
 
 CONSTANT_BC = "Constant value (Dirichlet) "
 CONSTANT_DERIVATIVE_BC = "Constant derivative value (von Neumann)"
 PERIODIC_BC = "Periodic BC"
+GLOBAL_DIFFUSION_LABEL = "Global (default value)"
+
 
 class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard):
     def __init__(self, parent=None):
@@ -866,7 +868,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         self.removePage(self.get_page_id_by_name("AdhesionFlex Plugin"))
         self.removePage(self.get_page_id_by_name("ContactMultiCad Plugin"))
         self.removePage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
-        self.removePage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
+        self.removePage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))  # Do not use.
 
         self.nameLE.selectAll()
 
@@ -1289,13 +1291,14 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         bc_layout.addWidget(z_group, 0)
         bc_group.setLayout(bc_layout)
         return bc_group
+
     def populate_pde_solver_entries(self):
         self.field_tab.clear() # clear the stuff
         self.cellTypeData = {}
 
         self.bcs_tab.clear()
         self.ics_tab.clear()
-        print(self.cellTypeTable.rowCount(), "hi")
+        #print(self.cellTypeTable.rowCount(), "hi")
 
         for row in range(self.cellTypeTable.rowCount()):
             cell_type = str(self.cellTypeTable.item(row, 0).text())
@@ -1306,7 +1309,6 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 freeze = True
 
             self.cellTypeData[cell_type] = [row, freeze]
-        # self.field_table_widget_dict = {} # put in constructor
 
         for solver_name, fields in self.diffusantDict.items():
             for idx, field in enumerate(fields):
@@ -1320,32 +1322,174 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                 vh = QHeaderView(Qt.Vertical)
                 vh.hide()
                 table_widget.setVerticalHeader(vh)  # Hide row numbers
-                table_widget.setColumnCount(3)
-                table_widget.setHorizontalHeaderLabels(["Cell or Area/Volume", "Diffusion coefficient (pixels^2 per mcs)", "Decay coefficient (1/mcs)"])
-                table_widget.horizontalHeader().setStretchLastSection(True)
+                table_widget.setColumnCount(8)  # was 3
+                cell_type_header = QTableWidgetItem("Cell or\n Area/Volume")
+                cell_type_header.setToolTip("Cell type or volume type")
+                diff_coeff_header = QTableWidgetItem("Diffusion coeff\n (pixels^2 /mcs)")
+                diff_decay_header = QTableWidgetItem("Decay coefficient\n (1/mcs)")
+                const_sec_header = QTableWidgetItem("Secretion rate\n (amt/mcs/voxel)")
+                const_sec_header.setToolTip("Constant Secretion rate or rate of secretion on contact with another cell.")
+                const_conc_sec_header = QTableWidgetItem("Constant\n concentration")
+                const_conc_sec_header.setToolTip("Chemical field kept at constant concentration.")
+                sec_on_contact_header = QTableWidgetItem("Secrete on contact\n with cell/vol")
+                sec_on_contact_header.setToolTip("Secrete on contact with another cell or volume: 'cell_type1, cell_type2' ")
+                max_up_header = QTableWidgetItem("Max uptake by cell\n (amt/mcs/voxel)")
+                max_up_header.setToolTip("Maximum uptake of the field chemical by cell or volume")
+                rel_up_header = QTableWidgetItem("Relative uptake\n by cell/vol")
+                rel_up_header.setToolTip("Typical value between 0.0 and 1.0")
+                table_widget.setHorizontalHeaderItem(0, cell_type_header)
+                table_widget.setHorizontalHeaderItem(1, diff_coeff_header)
+                table_widget.setHorizontalHeaderItem(2, diff_decay_header)
+                table_widget.setHorizontalHeaderItem(3, const_sec_header)
+                table_widget.setHorizontalHeaderItem(4, const_conc_sec_header)
+                table_widget.setHorizontalHeaderItem(5, sec_on_contact_header)
+                table_widget.setHorizontalHeaderItem(6, max_up_header)
+                table_widget.setHorizontalHeaderItem(7, rel_up_header)
+
+              #  table_widget.horizontalHeader().setStretchLastSection(True)
                 table_widget.horizontalHeader().setSectionResizeMode(
                     QHeaderView.Stretch)
+                # Global diffusion settings in first row:
+                table_widget.insertRow(table_widget.rowCount())
+                global_name = GLOBAL_DIFFUSION_LABEL
+                global_val_decay_coefficient = '0.00001'
+                item = QTableWidgetItem(global_name)
+                item.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 0, item)
+                default_value_diffusion_coefficient = '0.01'
+                diff_item = QTableWidgetItem(default_value_diffusion_coefficient)
+                diff_item.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 1, diff_item)
+                decay_item = QTableWidgetItem(global_val_decay_coefficient)
+                decay_item.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 2, decay_item)
+                const_sec_item = QTableWidgetItem("n/a")
+                const_sec_item.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 3, const_sec_item)
+                const_item = QTableWidgetItem("n/a")
+                const_item.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 4, const_item)
+                const_item2 = QTableWidgetItem("n/a")
+                const_item2.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 5, const_item2)
+                const_item3 = QTableWidgetItem("n/a")
+                const_item3.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 6, const_item3)
+                const_item4 = QTableWidgetItem("n/a")
+                const_item4.setTextAlignment(Qt.AlignCenter)
+                table_widget.setItem(0, 7, const_item4)
 
+                # now list all cell types:
                 for row, (type_name, type_data) in enumerate(self.cellTypeData.items()):
                     table_widget.insertRow(table_widget.rowCount())
-                    default_value_diffusion_coefficient = '0.1'
+                    #default_value_diffusion_coefficient = '0.1'
                     default_value_decay_coefficient = '0.001'
-                    if type_name == [type_name for type_name, type_data in self.cellTypeData.items()][0]:
-                        type_name = 'Global (default value)'
-                        default_value_decay_coefficient = '0.00001'
+                    default_value_const_secretion = '-'
+                    default_value_const_conc_secretion = '-'
+                    default_value_sec_on_contact = '-'
+                    default_value_max_uptake = '1.0'
+                    default_value_rel_uptake = '1.0'
+              #      if type_name == [type_name for type_name, type_data in self.cellTypeData.items()][0]:
+              #          type_name = GLOBAL_DIFFUSION_LABEL
+              #          default_value_decay_coefficient = '0.00001'
                     item = QTableWidgetItem(type_name)
                     item.setTextAlignment(Qt.AlignCenter)
-                    table_widget.setItem(row, 0, item)
+                    table_widget.setItem(row + 1, 0, item)
                     diff_item = QTableWidgetItem(default_value_diffusion_coefficient)
                     diff_item.setTextAlignment(Qt.AlignCenter)
-                    table_widget.setItem(row, 1, diff_item)
+                    table_widget.setItem(row + 1, 1, diff_item)
                     decay_item = QTableWidgetItem(default_value_decay_coefficient)
                     decay_item.setTextAlignment(Qt.AlignCenter)
-                    table_widget.setItem(row, 2, decay_item)
+                    table_widget.setItem(row +1, 2, decay_item)
+                    const_sec_item = QTableWidgetItem(default_value_const_secretion)
+                    const_sec_item.setTextAlignment(Qt.AlignCenter)
+                    table_widget.setItem(row +1, 3, const_sec_item)
+                    const_conc_sec_item = QTableWidgetItem(default_value_const_conc_secretion)
+                    const_conc_sec_item.setTextAlignment(Qt.AlignCenter)
+                    table_widget.setItem(row + 1, 4, const_conc_sec_item)
+                    sec_on_contact_item = QTableWidgetItem(default_value_sec_on_contact)
+                    sec_on_contact_item.setTextAlignment(Qt.AlignCenter)
+                    table_widget.setItem(row + 1, 5, sec_on_contact_item)
+                    max_uptake_item = QTableWidgetItem(default_value_max_uptake)
+                    max_uptake_item.setTextAlignment(Qt.AlignCenter)
+                    table_widget.setItem(row + 1, 6, max_uptake_item)
+                    rel_uptake_item = QTableWidgetItem(default_value_rel_uptake)
+                    rel_uptake_item.setTextAlignment(Qt.AlignCenter)
+                    table_widget.setItem(row + 1, 7, rel_uptake_item)
+
                 self.field_tab.insertTab(idx, table_widget, field)
                 self.field_tab.currentChanged.connect(self.field_tab_changed)
                 self.field_table_dict[field] = table_widget
 
+    # Expect a comma separated string of cell types to check: 'cell1, cell2, cell3'
+    def checkIfValidCellType(self, cell_types_str):
+        type_list = cell_types_str.split(",")
+        for new_type in type_list:
+            found = False
+            for row in range(self.cellTypeTable.rowCount()):
+                valid_cell_type = str(self.cellTypeTable.item(row, 0).text())
+                if new_type.strip() == valid_cell_type.strip():
+                    found = True
+            if not found:
+                print("Cell type not found: " + str(new_type))
+                return False
+        return True
+
+    def getDiffusionSecretion_Values(self, field_table, field_str):
+        secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
+        for row in range(field_table.rowCount()):
+            secretion_type = "-"
+            rate = 0.0  # holds value of secretion rate for all three types of field secretion
+            cell_type = str(field_table.item(row, 0).text())
+            if not row == 0 and not cell_type == GLOBAL_DIFFUSION_LABEL:  # first row contains default diffusion values
+                const_conc_sec = str(field_table.item(row, 4).text())
+                on_contact_with = str(field_table.item(row, 5).text())
+                try:
+                    if not const_conc_sec == "-":
+                        rate = float(const_conc_sec)
+                        secretion_type = "constant concentration"
+                except Exception:
+                    rate = 0.0
+                try:
+                    uniform_rate = str(field_table.item(row, 3).text())
+                    if not uniform_rate == "-":
+                        rate = float(str(field_table.item(row, 3).text()))
+                        secretion_type = "uniform"
+                except Exception:
+                    rate = 0.0
+                try:
+                    max_uptake = float(str(field_table.item(row, 6).text()))
+                except Exception:
+                    max_uptake = 0.0
+                try:
+                    rel_uptake = float(str(field_table.item(row, 7).text()))
+                except Exception:
+                    rel_uptake = 0.0
+
+                diff_fe_secr_dict = {}
+                diff_fe_secr_dict["CellType"] = cell_type
+                diff_fe_secr_dict["MaxUptake"] = max_uptake
+                diff_fe_secr_dict["RelativeUptakeRate"] = rel_uptake
+                diff_fe_secr_dict["Rate"] = rate
+                if not on_contact_with == "-":
+                    if self.checkIfValidCellType(on_contact_with):
+                        diff_fe_secr_dict["OnContactWith"] = on_contact_with
+                        secretion_type = "on contact"
+                    else:
+                        msg = '''
+                        For 'Secrete on contact': one of the cell types listed is invalid. 
+                        Make sure cell type list is comma separated.
+                        '''
+                        QMessageBox.warning(self, "Invalid Cell type", msg, QMessageBox.Ok)
+                        print("msg")
+                diff_fe_secr_dict["SecretionType"] = secretion_type
+                try:
+                    secretion_diffusionFE_data[field_str].append(diff_fe_secr_dict)
+                except LookupError:
+                    secretion_diffusionFE_data[field_str] = [diff_fe_secr_dict]
+        return secretion_diffusionFE_data
+
+    #  Returns diffusion values dict
     def getCurrentDiffusionFE_Values(self):
         diffusion_vals_dict = {}
         for solver_name, fields in self.diffusantDict.items():
@@ -1425,6 +1569,7 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                         diffusant_ic = {"InitialConditions": all_ics}
                     diffusant_data.update(diffusant_ic)
                 diffusion_vals_dict[field] = diffusant_data
+
             print(diffusion_vals_dict)
         return diffusion_vals_dict
 
@@ -1633,9 +1778,9 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             for cell_type_tuple in self.typeTable:
                 self.secrCellTypeCB_2.addItem(cell_type_tuple[0])
                 self.secrOnContactCellTypeCB_2.addItem(cell_type_tuple[0])
-            for solver_name, fields in self.diffusantDict.items():
-                for field_name in fields:
-                    self.secrFieldCB_2.addItem(field_name)
+        #    for solver_name, fields in self.diffusantDict.items():  # remove if do not need anymore
+        #        for field_name in fields:
+        #            self.secrFieldCB_2.addItem(field_name)
 
             if len(self.diffusantDict.items()) > 0:  # VALIDATE ICs and BCs,
                 solver_found = False
@@ -1643,11 +1788,11 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
                     if solver_name == "DiffusionSolverFE" and not solver_found:
                         solver_found = True
                         self.setPage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME), self.get_page_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
-                        self.setPage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME), self.get_page_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
+                       # self.setPage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME), self.get_page_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
                 self.populate_pde_solver_entries()
             else:
                 self.removePage(self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME))
-                self.removePage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME))
+              #  self.removePage(self.get_page_id_by_name(SECRETION_DIFFUSION_FE_PAGE_ID_BY_NAME)) # remove if do not need anymore
             return True
 
         if self.currentId() == self.get_page_by_name("ContactMultiCad Plugin"):
@@ -1665,6 +1810,11 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
         if self.currentId() == self.get_page_id_by_name(DIFFUSION_FE_WIZARD_PAGE_ID_BY_NAME):
             # we only extract data from page here - it is not a validation strictly speaking
             self.diffusionFE_vals_dict = self.getCurrentDiffusionFE_Values()
+            # Get secretion values and uptake values
+            for solver_name, fields in self.diffusantDict.items():
+                for field_name in fields:
+                    self.diffusionFE_vals_dict[field_name]["Secretion"] = \
+                        self.getDiffusionSecretion_Values(self.field_table_dict[field_name], field_name)
 
         if self.currentId() == self.get_page_by_name("AdhesionFlex Plugin"):
 
@@ -1799,34 +1949,35 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             solver_name
         except NameError:
             solver_name = None
-        if solver_name == "DiffusionSolverFE":
+    #    if solver_name == "DiffusionSolverFE":  # Remove this section if do not need anymore
             #  DiffusionFE Secretion:
-            secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
-            for row in range(self.secretion_DiffusionFE_Table.rowCount()):
+           
+     #       secretion_diffusionFE_data = {}  # format {field:[secrDict1,secrDict2,...]}
+     #       for row in range(self.secretion_DiffusionFE_Table.rowCount()):
 
-                secr_field_name = str(self.secretion_DiffusionFE_Table.item(row, 0).text())
-                cell_type = str(self.secretion_DiffusionFE_Table.item(row, 1).text())
+     #           secr_field_name = str(self.secretion_DiffusionFE_Table.item(row, 0).text())
+     #           cell_type = str(self.secretion_DiffusionFE_Table.item(row, 1).text())
 
-                try:
-                    rate = float(str(self.secretion_DiffusionFE_Table.item(row, 2).text()))
-                except Exception:
-                    rate = 0.0
+     #           try:
+     #               rate = float(str(self.secretion_DiffusionFE_Table.item(row, 2).text()))
+     #           except Exception:
+     #               rate = 0.0
 
-                on_contact_with = str(self.secretion_DiffusionFE_Table.item(row, 3).text())
-                secretion_type = str(self.secretion_DiffusionFE_Table.item(row, 4).text())
+     #           on_contact_with = str(self.secretion_DiffusionFE_Table.item(row, 3).text())
+     #           secretion_type = str(self.secretion_DiffusionFE_Table.item(row, 4).text())
 
-                diff_fe_secr_dict = {}
-                diff_fe_secr_dict["CellType"] = cell_type
-                diff_fe_secr_dict["Rate"] = rate
-                diff_fe_secr_dict["OnContactWith"] = on_contact_with
-                diff_fe_secr_dict["SecretionType"] = secretion_type
+      #          diff_fe_secr_dict = {}
+      #          diff_fe_secr_dict["CellType"] = cell_type
+      #          diff_fe_secr_dict["Rate"] = rate
+      #          diff_fe_secr_dict["OnContactWith"] = on_contact_with
+      #          diff_fe_secr_dict["SecretionType"] = secretion_type
 
-                try:
-                    secretion_diffusionFE_data[secr_field_name].append(diff_fe_secr_dict)
-                except LookupError:
-                    secretion_diffusionFE_data[secr_field_name] = [diff_fe_secr_dict]
-            for field in secretion_diffusionFE_data:
-                self.diffusionFE_vals_dict[field]["Secretion"] = secretion_diffusionFE_data[field]
+      #          try:
+      #              secretion_diffusionFE_data[secr_field_name].append(diff_fe_secr_dict)
+      #          except LookupError:
+      #              secretion_diffusionFE_data[secr_field_name] = [diff_fe_secr_dict]
+      #      for field in secretion_diffusionFE_data:
+      #          self.diffusionFE_vals_dict[field]["Secretion"] = secretion_diffusionFE_data[field]
 
         self.secretion_data = {}  # format {field:[secrDict1,secrDict2,...]}
 
@@ -2050,6 +2201,10 @@ class NewSimulationWizard(QWizard, ui_newsimulationwizard.Ui_NewSimulationWizard
             generator.generateConnectivityPlugin(*args, **kwds)
 
         if self.secretionCHB.isChecked():
+            generator.generateSecretionPlugin(*args, **kwds)
+
+        if self.pythonControlSecretionCHB.isChecked():
+            args.append("pythonControl")
             generator.generateSecretionPlugin(*args, **kwds)
 
             # if self.pdeSolverCallerCHB.isChecked():

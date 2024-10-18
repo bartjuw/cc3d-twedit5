@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_NewSimulationWizard(object):
     def setupUi(self, NewSimulationWizard):
         NewSimulationWizard.setObjectName("NewSimulationWizard")
-        NewSimulationWizard.resize(887, 797)
+        NewSimulationWizard.resize(904, 797)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
@@ -285,9 +285,6 @@ class Ui_NewSimulationWizard(object):
         spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_14.addItem(spacerItem6)
         self.verticalLayout_11.addWidget(self.chem_fields_clear_horizontalGroupBox)
-        self.pdeSolverCallerCHB = QtWidgets.QCheckBox(self.wizardPage_chemical_fields)
-        self.pdeSolverCallerCHB.setObjectName("pdeSolverCallerCHB")
-        self.verticalLayout_11.addWidget(self.pdeSolverCallerCHB)
         self.horizontalLayout_15 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_15.setObjectName("horizontalLayout_15")
         self.label_18 = QtWidgets.QLabel(self.wizardPage_chemical_fields)
@@ -762,6 +759,10 @@ class Ui_NewSimulationWizard(object):
         self.field_tab.setMaximumSize(QtCore.QSize(800000, 800000))
         self.field_tab.setObjectName("field_tab")
         self.verticalLayout_22.addWidget(self.field_tab)
+        self.pythonControlSecretionCHB = QtWidgets.QCheckBox(self.wizardPageDiffusion)
+        self.pythonControlSecretionCHB.setEnabled(True)
+        self.pythonControlSecretionCHB.setObjectName("pythonControlSecretionCHB")
+        self.verticalLayout_22.addWidget(self.pythonControlSecretionCHB)
         self.ics_label = QtWidgets.QLabel(self.wizardPageDiffusion)
         font = QtGui.QFont()
         font.setPointSize(12)
@@ -1023,8 +1024,6 @@ class Ui_NewSimulationWizard(object):
         item.setText(_translate("NewSimulationWizard", "Solver"))
         self.diff_solver_info_textBrowser.setPlaceholderText(_translate("NewSimulationWizard", "Description of each diffusion algorithm."))
         self.clearFieldTablePB.setText(_translate("NewSimulationWizard", "Clear Table"))
-        self.pdeSolverCallerCHB.setToolTip(_translate("NewSimulationWizard", "Inserts PDESolver plugin into generated code. "))
-        self.pdeSolverCallerCHB.setText(_translate("NewSimulationWizard", "Enable multiple calls of PDE solvers"))
         self.label_18.setText(_translate("NewSimulationWizard", "Field Name"))
         self.label_19.setText(_translate("NewSimulationWizard", "Solver"))
         self.solverCB.setItemText(0, _translate("NewSimulationWizard", "DiffusionSolverFE"))
@@ -1338,6 +1337,8 @@ class Ui_NewSimulationWizard(object):
         self.cmcMoleculeLE.setToolTip(_translate("NewSimulationWizard", "Specify names of the adhesion molecules you want to use int he simulation"))
         self.cmcMoleculeAddPB.setText(_translate("NewSimulationWizard", "Add"))
         self.wizardPageDiffusion.setTitle(_translate("NewSimulationWizard", "Chemical field diffusion coefficients and boundary conditions (PDE Solvers Specification)"))
+        self.pythonControlSecretionCHB.setToolTip(_translate("NewSimulationWizard", "Use python code to handle secretion and uptake, ignore values in table."))
+        self.pythonControlSecretionCHB.setText(_translate("NewSimulationWizard", "Control Secretion through Python"))
         self.ics_label.setText(_translate("NewSimulationWizard", "Initial conditions"))
         self.ics_tab.setTabText(self.ics_tab.indexOf(self.tab), _translate("NewSimulationWizard", "Tab 1"))
         self.ics_tab.setTabText(self.ics_tab.indexOf(self.tab_3), _translate("NewSimulationWizard", "Tab 2"))
@@ -1375,7 +1376,7 @@ class Ui_NewSimulationWizard(object):
         self.textBrowser.setHtml(_translate("NewSimulationWizard", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.8pt; font-weight:400; font-style:normal;\">\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:6.6pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\">CC3D project will be generated now</span></p>\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:600; color:#0000ff;\">NOTE:</span><span style=\" font-size:12pt;\"> The parameters in the XML and Python scripts will have to be changed to be realistic. Please see CC3D manual on how to choose simulation parameters</span></p></body></html>"))
