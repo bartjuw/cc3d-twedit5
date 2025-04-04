@@ -1022,7 +1022,7 @@ p, li { white-space: pre-wrap; }
           <string>Moment Of Inertia</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -1035,7 +1035,7 @@ p, li { white-space: pre-wrap; }
           <string>Cell Pixel Tracker</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -1048,7 +1048,7 @@ p, li { white-space: pre-wrap; }
           <string>Cell Boundary Pixel Tracker</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
